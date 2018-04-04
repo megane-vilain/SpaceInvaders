@@ -1,6 +1,8 @@
 import sys, pygame
 pygame.init()
 
+pygame.display.set_caption('Space Invaders')
+
 size = width, height = 650, 600
 black = 0, 0, 0
 white = 255,255,255
@@ -9,11 +11,9 @@ speed = 12
 pygame.key.set_repeat(400, 30)
 
 screen = pygame.display.set_mode(size)
-<<<<<<< HEAD
-ship = pygame.image.load("ship.png")
-ship = pygame.image.load("space-invaders.png")
->>>>>>> 979a07cd170b326416a74c85944b37750356b98b
 
+ship = pygame.image.load("ship.png")
+space = pygame.image.load("space.jpg")
 
 shiprect = ship.get_rect()
 shiprect.y = 500
@@ -31,10 +31,8 @@ while 1:
 		
 		if event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
 			pass
-			#futur fonction de tir
-		
+			#futur fonction de tir	
 
-	screen.fill(white)
-	#screen.fill(white)
+	screen.blit(space, (0,0))
 	screen.blit(ship, shiprect)
 	pygame.display.flip()
