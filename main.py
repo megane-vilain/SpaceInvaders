@@ -1,6 +1,7 @@
 import sys, pygame
 pygame.init()
 
+pygame.display.set_caption('Space Invaders')
 size = width, height = 650, 600
 black = 0, 0, 0
 white = 255,255,255
@@ -10,6 +11,7 @@ pygame.key.set_repeat(400, 30)
 
 screen = pygame.display.set_mode(size)
 ship = pygame.image.load("space-invaders.png")
+space = pygame.image.load("space.jpg")
 
 
 shiprect = ship.get_rect()
@@ -31,6 +33,7 @@ while 1:
 			#futur fonction de tir
 		
 
-	screen.fill(white)
+	#screen.fill(white)
+	screen.blit(space, (0,0))
 	screen.blit(ship, shiprect)
 	pygame.display.flip()
