@@ -9,7 +9,7 @@ speed = 12
 pygame.key.set_repeat(400, 30)
 
 screen = pygame.display.set_mode(size)
-ship = pygame.image.load("space-invaders.png")
+ship = pygame.image.load("ship.png")
 
 
 shiprect = ship.get_rect()
