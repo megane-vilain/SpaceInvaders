@@ -26,7 +26,7 @@ while 1:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT and shiprect.right < width:
             shiprect = shiprect.move(speed,0)
 		
-		if event.type == pygame.KEYDOWN and event.key == pygame.K_UP and shiprect.right < width:
+		if event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
             pass
 			#futur fonction de tir
 		
