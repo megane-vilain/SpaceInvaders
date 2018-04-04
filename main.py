@@ -9,7 +9,10 @@ speed = 12
 pygame.key.set_repeat(400, 30)
 
 screen = pygame.display.set_mode(size)
+<<<<<<< HEAD
 ship = pygame.image.load("ship.png")
+ship = pygame.image.load("space-invaders.png")
+>>>>>>> 979a07cd170b326416a74c85944b37750356b98b
 
 
 shiprect = ship.get_rect()
@@ -32,5 +35,6 @@ while 1:
 		
 
 	screen.fill(white)
+	#screen.fill(white)
 	screen.blit(ship, shiprect)
 	pygame.display.flip()
