@@ -1,4 +1,5 @@
 import sys, pygame, random
+from os import path
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -26,6 +27,7 @@ class Player(pygame.sprite.Sprite):
         bullet = Bullet(self.rect.centerx, self.rect.top)
         all_sprites.add(bullet)
         bullets.add(bullet)
+        bullet_sound.play()
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self,x,y):
@@ -47,25 +49,27 @@ size = width, height = 650, 600
 speed = 12
 Fps = 60
 bullets=[]
+Sound_dir = path.join(path.dirname(__file__),'Sounds')
+Img_dir = path.join(path.dirname(__file__),'Images')
 
 #Couleurs
 Black = 0, 0, 0
 White = 255,255,255
 
 #Images
-player_img = pygame.image.load("ship.png")
-background_img = pygame.image.load("space.jpg")
-bullet_img = pygame.image.load("bullet.png")
+player_img = pygame.image.load(path.join(Img_dir,'ship.png'))
+background_img = pygame.image.load(path.join(Img_dir,'space.jpg'))
+bullet_img = pygame.image.load(path.join(Img_dir,'bullet.png'))
 
 #Initialisation pygame 
 pygame.init()
+pygame.mixer.init()
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('background_img Invaders')
 
-#Gestion d'un appui prolongé sur une touche 
-pygame.key.set_repeat(400, 30)
-
+#Musiques
+bullet_sound = pygame.mixer.Sound(path.join(Sound_dir,'shoot.wav'))
 
 all_sprites = pygame.sprite.Group()
 bullets = pygame.sprite.Group()
