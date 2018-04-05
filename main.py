@@ -1,38 +1,87 @@
-import sys, pygame
-pygame.init()
+import sys, pygame, random
 
-pygame.display.set_caption('Space Invaders')
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = player_img
+        self.rect = self.image.get_rect()
+        self.rect.centerx = width / 2
+        self.rect.bottom = height - 10
+        self.speedx = 0
 
+    def update(self):
+        self.speedx = 0
+        keystate = pygame.key.get_pressed()
+        if keystate[pygame.K_LEFT]:
+            self.speedx = -8
+        if keystate[pygame.K_RIGHT]:
+            self.speedx = 8
+        self.rect.x += self.speedx
+        if self.rect.right > width:
+            self.rect.right = width
+        if self.rect.left < 0:
+            self.rect.left = 0
+
+    def shoot(self):
+        bullet = Bullet(self.rect.centerx, self.rect.top)
+        all_sprites.add(bullet)
+        bullets.add(bullet)
+
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = bullet_img
+        self.rect = self.image.get_rect()
+        self.rect.bottom = y
+        self.rect.centerx = x
+        self.speedy = -10
+
+    def update(self):
+        self.rect.y += self.speedy
+        screen.blit(bullet_img,(self.rect.x,self.rect.y))
+        if self.rect.bottom < 0:
+            self.kill()
+
+#Variables
 size = width, height = 650, 600
-black = 0, 0, 0
-white = 255,255,255
 speed = 12
+Fps = 60
+bullets=[]
 
+#Couleurs
+Black = 0, 0, 0
+White = 255,255,255
+
+#Images
+player_img = pygame.image.load("ship.png")
+background_img = pygame.image.load("space.jpg")
+bullet_img = pygame.image.load("bullet.png")
+
+#Initialisation pygame 
+pygame.init()
+clock = pygame.time.Clock()
+screen = pygame.display.set_mode(size)
+pygame.display.set_caption('background_img Invaders')
+
+#Gestion d'un appui prolongé sur une touche 
 pygame.key.set_repeat(400, 30)
 
-screen = pygame.display.set_mode(size)
 
-ship = pygame.image.load("ship.png")
-space = pygame.image.load("space.jpg")
+all_sprites = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
+player = Player()
+all_sprites.add(player)
 
-shiprect = ship.get_rect()
-shiprect.y = 500
-shiprect.x = 300
-
+#Boucle du jeu
 while 1:
-	for event in pygame.event.get():
-		if event.type == pygame.QUIT: sys.exit()
+    clock.tick(Fps) 
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT: sys.exit()
+        
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+            player.shoot()
 
-		if event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT and shiprect.left > 0:
-			shiprect = shiprect.move(-speed,0)
-
-		if event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT and shiprect.right < width:
-			shiprect = shiprect.move(speed,0)
-		
-		if event.type == pygame.KEYDOWN and event.key == pygame.K_UP:
-			pass
-			#futur fonction de tir	
-
-	screen.blit(space, (0,0))
-	screen.blit(ship, shiprect)
-	pygame.display.flip()
+    all_sprites.update()
+    screen.blit(background_img, (0,0))
+    all_sprites.draw(screen)
+    pygame.display.flip()
