@@ -67,15 +67,20 @@ pygame.mixer.init()
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode(size)
 pygame.display.set_caption('background_img Invaders')
+pygame.mixer.music.load(path.join(Sound_dir,'main.wav'))
+pygame.mixer.music.set_volume(0.4)
 
 #Musiques
 bullet_sound = pygame.mixer.Sound(path.join(Sound_dir,'shoot.wav'))
+bullet_sound.set_volume(0.05)
 
 all_sprites = pygame.sprite.Group()
 bullets = pygame.sprite.Group()
 player = Player()
 all_sprites.add(player)
 
+
+pygame.mixer.music.play(loops=-1)
 #Boucle du jeu
 while 1:
     clock.tick(Fps) 
