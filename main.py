@@ -9,9 +9,18 @@ class Player(pygame.sprite.Sprite):
         self.rect.centerx = width / 2
         self.rect.bottom = height - 10
         self.speedx = 0
+        self.shoot_delay = shoot_delay
+        self.lives = 3
+        self.hidden = False
+        self.hide_timer = pygame.time.get_ticks()
+        self.last_shot = pygame.time.get_ticks()
 
     def update(self):
         self.speedx = 0
+        if self.hidden and pygame.time.get_ticks() - self.hide_timer > 1000:
+                self.hidden = False
+                self.rect.centerx = width / 2
+                self.rect.bottom = height - 10
         keystate = pygame.key.get_pressed()
         if keystate[pygame.K_LEFT]:
             self.speedx = -8
@@ -23,11 +32,20 @@ class Player(pygame.sprite.Sprite):
         if self.rect.left < 0:
             self.rect.left = 0
 
+    def hide(self):
+        self.hidden = True
+        self.hide_timer = pygame.time.get_ticks()
+        self.rect.centerx = width / 2
+        self.rect.bottom = height - 10
+
     def shoot(self):
-        bullet = Bullet(self.rect.centerx, self.rect.top)
-        all_sprites.add(bullet)
-        bullets.add(bullet)
-        bullet_sound.play()
+        now = pygame.time.get_ticks()
+        if now - self.last_shot > self.shoot_delay:
+            self.last_shot = now
+            bullet = Bullet(self.rect.centerx, self.rect.top)
+            all_sprites.add(bullet)
+            bullets.add(bullet)
+            bullet_sound.play()
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self,x,y):
@@ -44,11 +62,41 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.bottom < 0:
             self.kill()
 
+class Ennemy(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        pygame.sprite.Sprite.__init__(self)
+        self.x = x
+        self.y = y
+        self.image = ennemy_img
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+        self.speedy = 1
+
+    def update(self):
+        self.rect.x  += self.speedy
+        if self.rect.right > width:
+            self.speedy = -self.speedy
+            self.rect.x += self.speedy
+            self.rect.y = self.rect.y + 50
+        elif self.rect.left <=0:
+            self.speedy = -self.speedy
+            self.rect.x = self.speedy
+            self.rect.y = self.rect.y + 20
+
+def draw_lives(surf, x, y ,lives, img):
+    for i in range(lives):
+        img_rect = img.get_rect()
+        img_rect.x = x + 30 *i
+        img_rect.y = y
+        surf.blit(img, img_rect)
+
 #Variables
-size = width, height = 650, 600
-speed = 12
+size = width, height = 900, 700
+speed_move = 12
+shoot_delay = 300
 Fps = 60
-bullets=[]
+running = True
 Sound_dir = path.join(path.dirname(__file__),'Sounds')
 Img_dir = path.join(path.dirname(__file__),'Images')
 
@@ -56,33 +104,49 @@ Img_dir = path.join(path.dirname(__file__),'Images')
 Black = 0, 0, 0
 White = 255,255,255
 
-#Images
-player_img = pygame.image.load(path.join(Img_dir,'ship.png'))
-background_img = pygame.image.load(path.join(Img_dir,'space.jpg'))
-bullet_img = pygame.image.load(path.join(Img_dir,'bullet.png'))
 
 #Initialisation pygame 
 pygame.init()
 pygame.mixer.init()
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode(size)
-pygame.display.set_caption('background_img Invaders')
+pygame.display.set_caption('Space Invaders')
 pygame.mixer.music.load(path.join(Sound_dir,'main.wav'))
-pygame.mixer.music.set_volume(0.4)
+pygame.mixer.music.set_volume(0.05)
+
+#Images
+player_img = pygame.image.load(path.join(Img_dir,'ship.png'))
+player_life_img = pygame.image.load(path.join(Img_dir, 'playerShip1_orange.png')).convert()
+player_life_mini_img = pygame.transform.scale(player_life_img, (25, 19))
+player_life_mini_img.set_colorkey(Black)
+background_img = pygame.image.load(path.join(Img_dir,'space.jpg')).convert()
+bullet_img = pygame.image.load(path.join(Img_dir,'bullet.png'))
+ennemy_img = pygame.image.load(path.join(Img_dir, 'mysteryb.ico'))
 
 #Musiques
 bullet_sound = pygame.mixer.Sound(path.join(Sound_dir,'shoot.wav'))
-bullet_sound.set_volume(0.05)
+bullet_sound.set_volume(0.1)
+explosion_sound = pygame.mixer.Sound(path.join(Sound_dir,'expl3.wav'))
 
 all_sprites = pygame.sprite.Group()
 bullets = pygame.sprite.Group()
+ennemies = pygame.sprite.Group()
+
+#Ajout du joeur
 player = Player()
 all_sprites.add(player)
 
+#Ajout des ennemies
+for i in range(10):
+    ennemy = Ennemy(800/4+60*i,10)
+    all_sprites.add(ennemy)
+    ennemies.add(ennemy)
 
+#Joue la musique du jeu en boucle
 pygame.mixer.music.play(loops=-1)
+
 #Boucle du jeu
-while 1:
+while running:
     clock.tick(Fps) 
     for event in pygame.event.get():
         if event.type == pygame.QUIT: sys.exit()
@@ -91,6 +155,25 @@ while 1:
             player.shoot()
 
     all_sprites.update()
+
+    #Vérifie si un projectile touche un ennemi
+    for ennemy in pygame.sprite.groupcollide(ennemies, bullets, True, True):
+        explosion_sound.play()
+
+    #Vérifie si un projectile touche le joeur
+    hits = pygame.sprite.spritecollide(player, ennemies, False)
+    if hits:
+        player.hide()
+        player.lives -= 1
+
+        if player.lives == 0:
+            runnig = False
+
+    #Quitte le jeu si il n'y a plus d'ennemies sur l'écran 
+    if not ennemies:
+        running = False
+
     screen.blit(background_img, (0,0))
     all_sprites.draw(screen)
+    draw_lives(screen, width - 100, 5 , player.lives, player_life_mini_img)
     pygame.display.flip()
