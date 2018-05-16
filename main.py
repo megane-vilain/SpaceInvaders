@@ -1,4 +1,4 @@
-import sys, pygame, random
+import sys, pygame, random, time
 from os import path
 
 #Variables
@@ -11,10 +11,12 @@ Sound_dir = path.join(path.dirname(__file__),'Sounds')
 Img_dir = path.join(path.dirname(__file__),'Images')
 
 #pixel sizes for grid squares
-TileWidth = 100                                
-TileHeight = 80
+TileWidth = 64                                
+TileHeight = 64
 TileMargin = 4
-MapSize = 8  
+MapRow = 12 
+MapColumn = 9
+
 
 #Couleurs
 Black = 0, 0, 0
@@ -74,39 +76,53 @@ class Player(ObjectBoard):
 		self.lives = 3
 		super().__init__(player_img, self.collumn, self.row)
 		
-	def update(self, event):
-		print("Fonction update")
-		if event == pygame.K_LEFT:
-			print("Gauche")
+	def update(self):
+		keys = pygame.key.get_pressed()
+		if keys[pygame.K_LEFT] or keys[pygame.K_q]:
 			print(str(self.row))
 			if self.row > 0:
 				self.row = self.row -1
 				print("Row : " + str(self.row))
-				self.rect.left = ((TileWidth * self.row) + TileMargin)
-		if event == pygame.K_RIGHT:
-			print("Doite")
+				while self.rect.left != (TileWidth * (self.row ) + TileMargin):
+					time.sleep(0.0050)
+					self.rect.left =  self.rect.left - 4
+					
+		if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
+			print("Droite")
 			print(str(self.row))
-			if self.row < MapSize:
+			if self.row < 13:
 				self.row = self.row +1
 				print("Row : " + str(self.row))
-				self.rect.left = ((TileWidth * self.row) + TileMargin)
+				while self.rect.left != (TileWidth * (self.row ) + TileMargin):
+					time.sleep(0.0050)
+					self.rect.left =  self.rect.left + 4
+
+class Ennemy(ObjectBoard):
+	def __init__(self, collumn, row):
+		self.row = row
+		self.collumn = collumn
+		super().__init__(ennemy_img, self.collumn, self.row)
+
 
 class Map(object):
-	global MapSize
+	global MapRow
+	global MapColumn
 
 	Grid = []
 
 	# Creating grid
-	for Row in range(MapSize):     
+	for Row in range(MapRow):     
 		Grid.append([])
-		for Column in range(MapSize):
+		for Column in range(MapColumn):
 			Grid[Row].append([])
 
 
 Map = Map()
 all_sprites = pygame.sprite.Group()
-player = Player( 7, 4)
+player = Player( 9, 6)
+ennemey = Ennemy (0, 3) 
 all_sprites.add(player)
+all_sprites.add(ennemey)
 
 #Boucle du jeu
 while running:
@@ -115,12 +131,8 @@ while running:
 	clock.tick(Fps) 
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT: sys.exit()
-		
-		if event.type == pygame.KEYDOWN and event.key == pygame.K_LEFT:
-			player.update(pygame.K_LEFT)
-		if event.type == pygame.KEYDOWN and event.key == pygame.K_RIGHT:
-			player.update(pygame.K_RIGHT)
 
+	all_sprites.update()
 	screen.blit(background_img, (0,0))
 	all_sprites.draw(screen)
 	pygame.display.flip()
