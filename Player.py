@@ -1,27 +1,31 @@
+from collections import namedtuple
+
 from ObjectBoard import *
 import time
 
 
 class Player(ObjectBoard):
-    def __init__(self, column, row, image):
+    def __init__(self, row , column,  image):
         self.row = row
         self.column = column
         self.lives = 3
         self.image = image
-        super().__init__(image, self.column, self.row)
+        super().__init__(image, self.row, self.column)
 
     def update(self):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT] or keys[pygame.K_q]:
-            if self.row > 0:
-                self.row = self.row - 1
-                while self.rect.left != (self.TileWidth * self.row + self.TileMargin):
+        keys = key.get_pressed()
+        if keys[K_LEFT] or keys[K_q]:
+            if self.column > 0:
+                self.column = self.column - 1
+                while self.rect.left != (self.TileWidth * self.column + self.TileMargin):
                     time.sleep(0.0050)
                     self.rect.left = self.rect.left - 4
-
-        if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-            if self.row < 13:
-                self.row = self.row + 1
-                while self.rect.left != (self.TileWidth * self.row + self.TileMargin):
+        if keys[K_RIGHT] or keys[K_d]:
+            if self.column <= 12:
+                self.column = self.column + 1
+                while self.rect.left != (self.TileWidth * self.column + self.TileMargin):
                     time.sleep(0.0050)
                     self.rect.left = self.rect.left + 4
+        Coord = namedtuple('Coord', ['row', 'column'])
+        coord = Coord(self.row, column=self.column)
+        return coord
