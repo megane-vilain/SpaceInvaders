@@ -13,7 +13,13 @@ class Player(ObjectBoard):
         super().__init__(image, self.row, self.column)
 
     def update(self):
+        """
+        Update the position of the player
+        :return: The old and new coordinates of player
+        """
         keys = key.get_pressed()
+        old_row = self.row
+        old_column = self.column
         if keys[K_LEFT] or keys[K_q]:
             if self.column > 0:
                 self.column = self.column - 1
@@ -26,6 +32,6 @@ class Player(ObjectBoard):
                 while self.rect.left != (self.TileWidth * self.column + self.TileMargin):
                     time.sleep(0.0050)
                     self.rect.left = self.rect.left + 4
-        Coord = namedtuple('Coord', ['row', 'column'])
-        coord = Coord(self.row, column=self.column)
+        Coord = namedtuple('Coord', ['row', 'column', 'old_row', 'old_column'])
+        coord = Coord(self.row, column=self.column, old_row = old_row, old_column=old_column)
         return coord

@@ -1,8 +1,6 @@
 import sys
 from os import path
-from Map import *
 from Ennemy import *
-from TypeEnum import *
 from Player import *
 
 from pygame import *
@@ -16,10 +14,11 @@ class Game:
         self.mAllSpritesGroup = sprite.Group()
         self.mEnemiesSpriteGroup = sprite.Group()
         self.mMap = Map(11, 14)
+        self.mPlayer = None
+        self.mEnemy = None
         self.size = width, height = 900, 668
         self.Fps = 60
         self.running = True
-        # Directories
         self.Sound_dir = path.join(path.dirname(__file__), 'Sounds')
         self.Img_dir = path.join(path.dirname(__file__), 'Images')
         self.background_img = image.load(path.join(self.Img_dir, 'space.jpg')).convert()
@@ -54,7 +53,9 @@ class Game:
                 if EVENT.type == QUIT:
                     sys.exit()
             coord = self.mPlayer.update()
-            print("Row : " + str(coord.row) + " column : " + str(coord.column))
+            if coord.column != coord.old_column:
+                self.mMap.update_map(coord, TypeEnum.PLAYER)
             self.screen.blit(self.background_img, (0, 0))
             self.mAllSpritesGroup.draw(self.screen)
             display.flip()
+

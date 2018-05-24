@@ -1,5 +1,6 @@
 from ObjectBoard import *
 
+
 class Ennemy(ObjectBoard):
     def __init__(self, row, column, image):
         self.row = row
