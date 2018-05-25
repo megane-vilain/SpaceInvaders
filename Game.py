@@ -41,8 +41,8 @@ class Game:
             self.mEnemiesSpriteGroup.add(self.mEnemy)
             self.mMap.Grid[0][2 + i] = TypeEnum.ENEMY
 
-    def add_player(self, playerimg):
-        self.mPlayer = Player(9,6, playerimg)
+    def add_player(self, player_img):
+        self.mPlayer = Player(9, 6, player_img)
         self.mAllSpritesGroup.add(self.mPlayer)
         self.mMap.Grid[self.mPlayer.row][self.mPlayer.column] = TypeEnum.PLAYER
 
@@ -53,6 +53,7 @@ class Game:
                 if EVENT.type == QUIT:
                     sys.exit()
             coord = self.mPlayer.update()
+            self.mEnemiesSpriteGroup.update()
             if coord.column != coord.old_column:
                 self.mMap.update_map(coord, TypeEnum.PLAYER)
             self.screen.blit(self.background_img, (0, 0))

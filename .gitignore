@@ -63,3 +63,5 @@ __pycache__/Map.cpython-36.pyc
 __pycache__/ObjectBoard.cpython-36.pyc
 __pycache__/Player.cpython-36.pyc
 __pycache__/TypeEnum.cpython-36.pyc
+*.xml
+*.iml
