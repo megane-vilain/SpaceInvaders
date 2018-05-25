@@ -5,7 +5,6 @@ from Player import *
 
 from pygame import *
 
-
 class Game:
 
     def __init__(self, screen):
@@ -13,7 +12,7 @@ class Game:
         self.clock = time.Clock()
         self.mAllSpritesGroup = sprite.Group()
         self.mEnemiesSpriteGroup = sprite.Group()
-        self.mMap = Map(11, 14)
+        self.mMap = Map(10, 13)
         self.mPlayer = None
         self.mEnemy = None
         self.size = width, height = 900, 668
@@ -33,6 +32,15 @@ class Game:
         mixer.music.load(path.join(self.Sound_dir, 'main.wav'))
         mixer.music.set_volume(0.05)
         timer = time.get_ticks()
+        self.load_images()
+
+    def load_images(self):
+        IMG_NAMES = ["player_ship", "player_life", "enemy1", "bullet"]
+        self.images = {name: image.load("Images/{}.ico".format(name)).convert_alpha()
+          for name in IMG_NAMES}
+
+    def load_sounds(self):
+        pass
 
     def add_enemies(self, enemies_number, enemy_img):
         for i in range(enemies_number):
@@ -47,16 +55,26 @@ class Game:
         self.mMap.Grid[self.mPlayer.row][self.mPlayer.column] = TypeEnum.PLAYER
 
     def main(self):
+
         while self.running:
             self.clock.tick(self.Fps)
             for EVENT in event.get():
                 if EVENT.type == QUIT:
                     sys.exit()
             coord = self.mPlayer.update()
-            self.mEnemiesSpriteGroup.update()
-            if coord.column != coord.old_column:
-                self.mMap.update_map(coord, TypeEnum.PLAYER)
+            coord_enemies = self.mEnemiesSpriteGroup.update(time.get_ticks())
+            if coord_enemies.column != coord_enemies.old_column:
+                self.mMap.update_map(coord_enemies, TypeEnum.ENEMY)
             self.screen.blit(self.background_img, (0, 0))
             self.mAllSpritesGroup.draw(self.screen)
+            if coord.column != coord.old_column:
+                self.mMap.update_map(coord, TypeEnum.PLAYER)
+
+            #Print the Grid for degug purpose
+            for Row in range(11):
+                draw.line(self.screen, (255,255,255), (0,Row * 64),(900,64*Row),4 )
+                for Column in range(14):
+                    draw.line(self.screen,(255,255,255), (Column*64, 0) , (Column*64, 700) ,4)
+            display.update()
             display.flip()
 

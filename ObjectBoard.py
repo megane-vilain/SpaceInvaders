@@ -2,7 +2,7 @@ from pygame import *
 from Map import *
 
 
-class ObjectBoard(sprite.Sprite):
+class ObjectBoard(sprite.Sprite, Map):
     def __init__(self, image, row, column ):
         sprite.Sprite.__init__(self)
         self.image = image
@@ -12,3 +12,4 @@ class ObjectBoard(sprite.Sprite):
         self.TileMargin = 4
         self.rect.left = (self.TileWidth * column + self.TileMargin)
         self.rect.top = (self.TileHeight * row + self.TileMargin)
+

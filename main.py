@@ -17,8 +17,8 @@ IMAGES = {name: image.load("Images/{}.ico".format(name)).convert_alpha()
 
 mGame = Game(SCREEN)
 
-mGame.add_enemies(8, IMAGES["enemy1"])
-mGame.add_player(IMAGES["player_ship"])
+mGame.add_enemies(4, mGame.images["enemy1"])
+mGame.add_player(mGame.images["player_ship"])
 
 mGame.main()
 

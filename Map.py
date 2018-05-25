@@ -1,4 +1,5 @@
 from TypeEnum import *
+from pygame import *
 
 
 class Map(object):
@@ -8,6 +9,9 @@ class Map(object):
         self.MapRow = row
         self.MapColumn = column
         self.Grid = []
+        self.TileWidth = 64
+        self.TileHeight = 64
+        self.TileMargin = 4
 
         for Row in range(self.MapRow):
             self.Grid.append([])
