@@ -8,13 +8,6 @@ RED = (255, 0, 0)
 
 SCREEN = display.set_mode((900, 700))
 
-Sound_dir = path.join(path.dirname(__file__), 'Sounds')
-
-IMG_NAMES = ["player_ship", "player_life", "enemy1", "bullet"]
-IMAGES = {name: image.load("Images/{}.ico".format(name)).convert_alpha()
-          for name in IMG_NAMES}
-
-
 mGame = Game(SCREEN)
 
 mGame.add_enemies(4, mGame.images["enemy1"])

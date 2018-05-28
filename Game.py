@@ -1,6 +1,6 @@
 import sys
 from os import path
-from Ennemy import *
+from Enemy import *
 from Player import *
 
 from pygame import *
@@ -12,7 +12,7 @@ class Game:
         self.clock = time.Clock()
         self.mAllSpritesGroup = sprite.Group()
         self.mEnemiesSpriteGroup = sprite.Group()
-        self.mMap = Map(10, 13)
+        self.mMap = Map(10, 20)
         self.mPlayer = None
         self.mEnemy = None
         self.size = width, height = 900, 668
@@ -21,7 +21,6 @@ class Game:
         self.Sound_dir = path.join(path.dirname(__file__), 'Sounds')
         self.Img_dir = path.join(path.dirname(__file__), 'Images')
         self.background_img = image.load(path.join(self.Img_dir, 'space.jpg')).convert()
-        self.running = True
 
         self.init_pygame()
 
@@ -33,6 +32,8 @@ class Game:
         mixer.music.set_volume(0.05)
         timer = time.get_ticks()
         self.load_images()
+        self.load_sounds()
+
 
     def load_images(self):
         IMG_NAMES = ["player_ship", "player_life", "enemy1", "bullet"]
@@ -40,11 +41,14 @@ class Game:
           for name in IMG_NAMES}
 
     def load_sounds(self):
-        pass
+        SND_NAMES = ["shoot", "expl3", "main"]
+        self.sounds = {name: mixer.Sound("Sounds/{}.wav".format(name)) for name in SND_NAMES}
+        mixer.music.load("Sounds/main.wav")
+        mixer.music.set_volume(0.5)
 
     def add_enemies(self, enemies_number, enemy_img):
         for i in range(enemies_number):
-            self.mEnemy = Ennemy(0, 2 + i, enemy_img)
+            self.mEnemy = Enemy(0, 2 + i, enemy_img)
             self.mAllSpritesGroup.add(self.mEnemy)
             self.mEnemiesSpriteGroup.add(self.mEnemy)
             self.mMap.Grid[0][2 + i] = TypeEnum.ENEMY
@@ -55,20 +59,33 @@ class Game:
         self.mMap.Grid[self.mPlayer.row][self.mPlayer.column] = TypeEnum.PLAYER
 
     def main(self):
-
+        move_down = False
+        row = 0
         while self.running:
+
             self.clock.tick(self.Fps)
+
             for EVENT in event.get():
                 if EVENT.type == QUIT:
                     sys.exit()
+
             coord = self.mPlayer.update()
-            coord_enemies = self.mEnemiesSpriteGroup.update(time.get_ticks())
-            if coord_enemies.column != coord_enemies.old_column:
-                self.mMap.update_map(coord_enemies, TypeEnum.ENEMY)
-            self.screen.blit(self.background_img, (0, 0))
-            self.mAllSpritesGroup.draw(self.screen)
             if coord.column != coord.old_column:
                 self.mMap.update_map(coord, TypeEnum.PLAYER)
+
+            if self.mMap.Grid[row][13] == TypeEnum.ENEMY or self.mMap.Grid[row][0] == TypeEnum.ENEMY:
+                move_down = True
+                row+=1
+
+            for enemy in self.mEnemiesSpriteGroup:
+                coord_enemies = enemy.update(time.get_ticks(),move_down)
+                if coord_enemies.column != coord_enemies.old_column or coord_enemies.row != coord_enemies.old_row:
+                    self.mMap.update_map(coord_enemies, TypeEnum.ENEMY)
+
+            move_down = False
+
+            self.screen.blit(self.background_img, (0, 0))
+            self.mAllSpritesGroup.draw(self.screen)
 
             #Print the Grid for degug purpose
             for Row in range(11):

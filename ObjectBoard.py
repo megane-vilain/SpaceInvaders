@@ -13,3 +13,5 @@ class ObjectBoard(sprite.Sprite, Map):
         self.rect.left = (self.TileWidth * column + self.TileMargin)
         self.rect.top = (self.TileHeight * row + self.TileMargin)
 
+    def shoot(self):
+        pass
