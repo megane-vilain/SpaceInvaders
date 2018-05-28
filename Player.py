@@ -12,6 +12,7 @@ class Player(ObjectBoard):
         self.image = image
         super().__init__(image, self.row, self.column)
 
+
     def update(self):
         """
         Update the position of the player

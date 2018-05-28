@@ -26,12 +26,10 @@ class Enemy(ObjectBoard):
             self.rect.top = (self.TileHeight * self.row + self.TileMargin)
             self.rect.left = (self.TileWidth * self.column + self.TileMargin)
             self.column += self.speed
-            print(self.column)
             self.timer += self.move_time
         if current_time - self.timer > self.move_time:
             self.rect.left = (self.TileWidth * self.column + self.TileMargin)
             self.column += self.speed
-            print(self.column)
             self.timer += self.move_time
         Coord = namedtuple('Coord', ['row', 'column', 'old_row', 'old_column'])
         coord = Coord(self.row, column=self.column, old_row=old_row, old_column=old_column)

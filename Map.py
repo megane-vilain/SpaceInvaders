@@ -27,3 +27,9 @@ class Map(object):
         """
         self.Grid[coord.old_row][coord.old_column] = TypeEnum.EMPTY
         self.Grid[coord.row][coord.column] = type
+
+    def check_collision(self, row, column, type):
+        if self.Grid[row-1][column] != TypeEnum.EMPTY:
+            print("Collision")
+            self.Grid[row-1][column] = TypeEnum.EMPTY
+            return True

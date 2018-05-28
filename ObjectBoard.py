@@ -12,6 +12,13 @@ class ObjectBoard(sprite.Sprite, Map):
         self.TileMargin = 4
         self.rect.left = (self.TileWidth * column + self.TileMargin)
         self.rect.top = (self.TileHeight * row + self.TileMargin)
+        self.shoot_delay = 700
+        self.last_shot = time.get_ticks()
 
-    def shoot(self):
-        pass
+    def shoot(self, current_time):
+        if current_time - self.last_shot > self.shoot_delay:
+            self.last_shot += self.shoot_delay
+            return True
+
+        else:
+            return False
