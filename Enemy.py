@@ -27,7 +27,11 @@ class Enemy(ObjectBoard):
             self.rect.left = (self.TileWidth * self.column + self.TileMargin)
             self.column += self.speed
             self.timer += self.move_time
-        if current_time - self.timer > self.move_time:
+        # if current_time - self.timer > self.move_time:
+        #     self.rect.left = (self.TileWidth * self.column + self.TileMargin)
+        #     self.column += self.speed
+        #     self.timer += self.move_time
+        else:
             self.rect.left = (self.TileWidth * self.column + self.TileMargin)
             self.column += self.speed
             self.timer += self.move_time

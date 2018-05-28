@@ -10,6 +10,7 @@ class Player(ObjectBoard):
         self.column = column
         self.lives = 3
         self.image = image
+        self.invulnerability_frames = 0
         super().__init__(image, self.row, self.column)
 
 

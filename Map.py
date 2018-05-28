@@ -30,6 +30,12 @@ class Map(object):
 
     def check_collision(self, row, column, type):
         if self.Grid[row-1][column] != TypeEnum.EMPTY:
-            print("Collision")
             self.Grid[row-1][column] = TypeEnum.EMPTY
             return True
+
+    def is_first(self, row, column ):
+        for i in range(row +1, self.MapRow -1):
+            if self.Grid[i][column] != TypeEnum.EMPTY:
+                return False
+
+        return True

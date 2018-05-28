@@ -26,6 +26,11 @@ class Game:
         self.Sound_dir = path.join(path.dirname(__file__), 'Sounds')
         self.Img_dir = path.join(path.dirname(__file__), 'Images')
         self.background_img = image.load(path.join(self.Img_dir, 'space.jpg')).convert()
+        self.shoot_time = 450
+        self.move_time = 500
+
+        self.reloaded_event = USEREVENT + 1
+        self.enemy_move_event = USEREVENT + 2
 
         self.init_pygame()
 
@@ -35,7 +40,8 @@ class Game:
         display.set_caption('Space Invaders')
         mixer.music.load(path.join(self.Sound_dir, 'main.wav'))
         mixer.music.set_volume(0.05)
-        timer = time.get_ticks()
+        time.set_timer(self.reloaded_event, self.shoot_time)
+        time.set_timer(self.enemy_move_event, self.move_time)
         self.load_images()
         self.load_sounds()
 
@@ -90,26 +96,49 @@ class Game:
                     sys.exit()
                 if EVENT.type == KEYDOWN and EVENT.key == K_SPACE:
                     if self.mPlayer.shoot(time.get_ticks()):
-                        self.add_bullet(self.images["bullet"], self.mPlayer.row - 1 , self.mPlayer.column, -1)
+                        self.add_bullet(self.images["bullet"], self.mPlayer.row - 1, self.mPlayer.column, -1)
+
+                if EVENT.type == self.reloaded_event:
+                    _bool = True
+                    while _bool:
+                        random_enemy = random.choice(self.mEnemiesSpriteGroup.sprites())
+                        if self.mMap.is_first(random_enemy.row, random_enemy.column):
+                            self.add_bullet(self.images["bullet"], random_enemy.row + 1, random_enemy.column, 1)
+                            time.set_timer(self.reloaded_event, self.shoot_time)
+                            _bool = False
+
+                if EVENT.type == self.enemy_move_event:
+                    if self.mMap.Grid[row][13] == TypeEnum.ENEMY or self.mMap.Grid[row][0] == TypeEnum.ENEMY:
+                        move_down = True
+                        row += 1
+                    else:
+                        move_down = False
+
+                    for enemy in self.mEnemiesSpriteGroup:
+                        coord_enemies = enemy.update(time.get_ticks(), move_down)
+                        self.mMap.update_map(coord_enemies, TypeEnum.ENEMY)
+                    time.set_timer(self.enemy_move_event, self.move_time)
 
             coord = self.mPlayer.update()
             if coord.column != coord.old_column:
                 self.mMap.update_map(coord, TypeEnum.PLAYER)
 
-            if self.mMap.Grid[row][13] == TypeEnum.ENEMY or self.mMap.Grid[row][0] == TypeEnum.ENEMY:
-                move_down = True
-                row += 1
+            # if self.mMap.Grid[row][13] == TypeEnum.ENEMY or self.mMap.Grid[row][0] == TypeEnum.ENEMY:
+            #     move_down = True
+            #     row += 1
 
-            for enemy in self.mEnemiesSpriteGroup:
-                coord_enemies = enemy.update(time.get_ticks(), move_down)
-                self.mMap.update_map(coord_enemies, TypeEnum.ENEMY)
+            # for enemy in self.mEnemiesSpriteGroup:
+            #     coord_enemies = enemy.update(time.get_ticks(), move_down)
+            #     self.mMap.update_map(coord_enemies, TypeEnum.ENEMY)
+            #
+            # move_down = False
 
             for bullet in self.mBulletsSpriteGroup:
                 coord_bullets = bullet.update(time.get_ticks())
                 if coord_bullets.row != coord_bullets.old_row:
-                    if coord_bullets.row == -1 or coord_bullets.row > 0:
+                    if coord_bullets.row == -1 or 0 < coord_bullets.row < 10:
                         self.mMap.update_map(coord_bullets, TypeEnum.BULLET)
-                    if coord_bullets.row < -1:
+                    if coord_bullets.row < -1 or coord_bullets.row > 10:
                         bullet.kill()
 
             for enemy in sprite.groupcollide(self.mEnemiesSpriteGroup, self.mBulletsSpriteGroup, True, True):
@@ -124,7 +153,13 @@ class Game:
                 else:
                     self.running = False
 
-            move_down = False
+            if sprite.spritecollide(self.mPlayer, self.mBulletsSpriteGroup, False):
+                if self.mPlayer.invulnerability_frames <= 0 and self.mPlayer.lives != 0:
+                    self.mPlayer.lives -= 1
+
+                else:
+                    running = False
+                    self.mPlayer.invulnerability_frames = 30
 
             if not self.mEnemiesSpriteGroup:
                 self.running = False
@@ -132,21 +167,13 @@ class Game:
             self.screen.blit(self.background_img, (0, 0))
             self.mAllSpritesGroup.draw(self.screen)
 
-            ##################TEST TIR ENEMIE###########
-            # print(random.randint(0,8))
-            #
-            # random_enemy = random.choice(self.mEnemiesSpriteGroup.sprites())
-            # if(random_enemy.shoot(time.get_ticks())):
-            #     self.add_bullet(self.images["bullet"], random_enemy.row+1, random_enemy.column, 1)
-            ##################################
-
             # Print the Grid for degug purpose
             for Row in range(11):
                 draw.line(self.screen, (255, 255, 255), (0, Row * 64), (900, 64 * Row), 4)
                 for Column in range(14):
                     draw.line(self.screen, (255, 255, 255), (Column * 64, 0), (Column * 64, 700), 4)
 
-            self.draw_lives(self.images["player_life"], 3)
+            self.draw_lives(self.images["player_life"], self.mPlayer.lives)
 
             display.update()
             display.flip()
