@@ -14,7 +14,8 @@ class Game:
         self.clock = time.Clock()
         self.mAllSpritesGroup = sprite.Group()
         self.mEnemiesSpriteGroup = sprite.Group()
-        self.mBulletsSpriteGroup = sprite.Group()
+        self.mEnemiesBulletsSpriteGroup = sprite.Group()
+        self.mPlayerBulletsSpriteGroup = sprite.Group()
         self.mMap = Map(10, 20)
         self.mPlayer = None
         self.mEnemy = None
@@ -46,7 +47,7 @@ class Game:
         self.load_sounds()
 
     def load_images(self):
-        img_names = ["player_ship", "player_life", "enemy1", "bullet"]
+        img_names = ["player_ship", "player_life", "enemy1", "enemy_laser", "player_laser"]
         self.images = {name: image.load("Images/{}.ico".format(name)).convert_alpha()
                        for name in img_names}
         self.images["player_life"] = transform.scale(self.images["player_life"], (30, 30))
@@ -57,7 +58,7 @@ class Game:
         self.sounds = {name: mixer.Sound("Sounds/{}.wav".format(name)) for name in snd_names}
         mixer.music.load("Sounds/main.wav")
         mixer.music.set_volume(0.2)
-        #mixer.music.play(loops=-1)
+        mixer.music.play(loops=-1)
 
     def draw_lives(self, img, lives):
         for i in range(lives):
@@ -78,33 +79,32 @@ class Game:
         self.mAllSpritesGroup.add(self.mPlayer)
         self.mMap.Grid[self.mPlayer.row][self.mPlayer.column] = TypeEnum.PLAYER
 
-    def add_bullet(self, bullet_img, row, column, direction):
+    def add_bullet(self, bullet_img, row, column, direction, type):
         self.mBullet = Bullet(row, column, bullet_img, direction)
         self.mAllSpritesGroup.add(self.mBullet)
-        self.mBulletsSpriteGroup.add(self.mBullet)
         self.mMap.Grid[row][column] = TypeEnum.BULLET
-        #self.sounds["shoot"].play()
+        if type == TypeEnum.PLAYER:
+            self.mPlayerBulletsSpriteGroup.add(self.mBullet)
+        else:
+            self.mEnemiesBulletsSpriteGroup.add(self.mBullet)
+
+        self.sounds["shoot"].play()
 
     def get_event(self):
-
-        if self.mPlayer.invulnerability_frames > 0:
-            self.mPlayer.invulnerability_frames -= 1
 
         for EVENT in event.get():
             if EVENT.type == QUIT:
                 sys.exit()
             if EVENT.type == KEYDOWN and EVENT.key == K_SPACE:
-                if self.mPlayer.shoot(time.get_ticks()):
-                    self.add_bullet(self.images["bullet"], self.mPlayer.row - 1, self.mPlayer.column, -1)
+                if self.mPlayer.shoot(time.get_ticks()) :
+                    self.add_bullet(self.images["player_laser"], self.mPlayer.row - 1, self.mPlayer.column, -1,
+                                    TypeEnum.PLAYER)
 
             if EVENT.type == self.reloaded_event:
-                _bool = True
-                while _bool:
-                    random_enemy = random.choice(self.mEnemiesSpriteGroup.sprites())
-                    if self.mMap.is_first(random_enemy.row, random_enemy.column):
-                        self.add_bullet(self.images["bullet"], random_enemy.row + 1, random_enemy.column, 1)
-                        time.set_timer(self.reloaded_event, self.shoot_time)
-                        _bool = False
+                random_enemy = random.choice(self.mEnemiesSpriteGroup.sprites())
+                self.add_bullet(self.images["enemy_laser"], random_enemy.row + 1, random_enemy.column, 1,
+                                TypeEnum.ENEMY)
+                time.set_timer(self.reloaded_event, self.shoot_time)
 
             if EVENT.type == self.enemy_move_event:
                 if self.mMap.Grid[self.row][14] == TypeEnum.ENEMY or self.mMap.Grid[self.row][-1] == TypeEnum.ENEMY:
@@ -127,34 +127,44 @@ class Game:
 
             self.get_event()
 
-            coord = self.mPlayer.update()
+            coord = self.mPlayer.update(time.get_ticks())
             if coord.column != coord.old_column:
                 self.mMap.update_map(coord, TypeEnum.PLAYER)
 
-            for bullet in self.mBulletsSpriteGroup:
+            for bullet in self.mEnemiesBulletsSpriteGroup:
                 coord_bullets = bullet.update(time.get_ticks())
-                self.screen.blit(self.images["bullet"], bullet.rect)
+                self.screen.blit(self.images["enemy_laser"], bullet.rect)
                 if coord_bullets.row != coord_bullets.old_row:
                     if coord_bullets.row == -1 or 0 < coord_bullets.row < 10:
                         self.mMap.update_map(coord_bullets, TypeEnum.BULLET)
                     if coord_bullets.row < -1 or coord_bullets.row > 10:
                         bullet.kill()
 
-            for enemy in sprite.groupcollide(self.mEnemiesSpriteGroup, self.mBulletsSpriteGroup, True, True):
+            for bullet in self.mPlayerBulletsSpriteGroup:
+                coord_bullets = bullet.update(time.get_ticks())
+                self.screen.blit(self.images["player_laser"], bullet.rect)
+                if coord_bullets.row != coord_bullets.old_row:
+                    if coord_bullets.row == -1 or 0 < coord_bullets.row < 10:
+                        self.mMap.update_map(coord_bullets, TypeEnum.BULLET)
+                    if coord_bullets.row < -1 or coord_bullets.row > 10:
+                        bullet.kill()
+
+            for enemy in sprite.groupcollide(self.mEnemiesSpriteGroup, self.mPlayerBulletsSpriteGroup, True, True):
                 self.mMap.Grid[enemy.row][enemy.column] = TypeEnum.EMPTY
-                #self.sounds["expl3"].play()
+                self.sounds["expl3"].play()
 
             if sprite.spritecollide(self.mPlayer, self.mEnemiesSpriteGroup, False):
                 if self.mPlayer.lives != 0:
                     self.mPlayer.lives -= 1
+                    self.mPlayer.hide_player()
                     self.mPlayer.invulnerability_frames = 30
                 else:
                     self.running = False
 
-            if sprite.spritecollide(self.mPlayer, self.mBulletsSpriteGroup, False):
-                if self.mPlayer.invulnerability_frames <= 0 and self.mPlayer.lives != 0:
+            if sprite.spritecollide(self.mPlayer, self.mEnemiesBulletsSpriteGroup, False):
+                if self.mPlayer.lives != 0 and self.mPlayer.hide != True:
                     self.mPlayer.lives -= 1
-                    self.mPlayer.invulnerability_frames = 30
+                    self.mPlayer.hide_player()
 
                 else:
                     self.running = False
@@ -165,11 +175,13 @@ class Game:
             self.screen.blit(self.background_img, (0, 0))
             self.mAllSpritesGroup.draw(self.screen)
 
+            print(str(self.mPlayer.hide))
+
             # Print the Grid for degug purpose
-            for Row in range(11):
-                draw.line(self.screen, (255, 255, 255), (0, Row * 64), (900, 64 * Row), 4)
-                for Column in range(14):
-                    draw.line(self.screen, (255, 255, 255), (Column * 64, 0), (Column * 64, 700), 4)
+            # for Row in range(11):
+            #     draw.line(self.screen, (255, 255, 255), (0, Row * 64), (900, 64 * Row), 4)
+            #     for Column in range(14):
+            #         draw.line(self.screen, (255, 255, 255), (Column * 64, 0), (Column * 64, 700), 4)
 
             self.draw_lives(self.images["player_life"], self.mPlayer.lives)
 

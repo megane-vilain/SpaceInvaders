@@ -27,10 +27,3 @@ class Map(object):
         """
         self.Grid[coord.old_row][coord.old_column] = TypeEnum.EMPTY
         self.Grid[coord.row][coord.column] = type
-
-    def is_first(self, row, column ):
-        for i in range(row +1, self.MapRow -1):
-            if self.Grid[i][column] == TypeEnum.ENEMY:
-                return False
-
-        return True
