@@ -31,8 +31,10 @@ class Game:
         self.row = 1
         self.score = 0
         self.font_name = font.match_font('arial')
+        self.game_over = False
 
-        self.reloaded_event = USEREVENT + 1
+        # Custom Pygame events
+        self.enemy_shoot_event = USEREVENT + 1
         self.enemy_move_event = USEREVENT + 2
 
         self.init()
@@ -42,13 +44,13 @@ class Game:
         mixer.init()
         display.set_caption('Space Invaders')
         mixer.music.load(path.join(self.Sound_dir, 'main.wav'))
-        time.set_timer(self.reloaded_event, self.shoot_time)
+        time.set_timer(self.enemy_shoot_event, self.shoot_time)
         time.set_timer(self.enemy_move_event, self.move_time)
         self.load_images()
         self.load_sounds()
 
     def load_images(self):
-        img_names = ["player_ship", "player_life", "enemy1", "enemy2", "enemy3", "enemy_laser", "player_laser"]
+        img_names = ["player_ship", "player_life", "enemy1", "enemy2", "enemy3", "enemy_laser", "player_laser", "space_invaders_main"]
         self.images = {name: image.load("Images/{}.ico".format(name)).convert_alpha()
                        for name in img_names}
         self.images["player_life"] = transform.scale(self.images["player_life"], (30, 30))
@@ -60,7 +62,6 @@ class Game:
         self.sounds["shoot"].set_volume(0.3)
         self.sounds["expl3"].set_volume(0.3)
         mixer.music.load("Sounds/main.wav")
-        mixer.music.set_volume(0.2)
         mixer.music.play(loops=-1)
 
     def draw_lives(self, img, lives):
@@ -110,11 +111,11 @@ class Game:
                     self.add_bullet(self.images["player_laser"], self.mPlayer.row - 1, self.mPlayer.column, -1,
                                     TypeEnum.PLAYER)
 
-            if EVENT.type == self.reloaded_event:
+            if EVENT.type == self.enemy_shoot_event:
                 random_enemy = random.choice(self.mEnemiesSpriteGroup.sprites())
                 self.add_bullet(self.images["enemy_laser"], random_enemy.row + 1, random_enemy.column, 1,
                                 TypeEnum.ENEMY)
-                time.set_timer(self.reloaded_event, self.shoot_time)
+                time.set_timer(self.enemy_shoot_event, self.shoot_time)
 
             if EVENT.type == self.enemy_move_event:
                 if self.mMap.Grid[self.row][14] == TypeEnum.ENEMY or self.mMap.Grid[self.row][-1] == TypeEnum.ENEMY:
@@ -125,15 +126,50 @@ class Game:
 
                 for enemy in self.mEnemiesSpriteGroup:
                     coord_enemies = enemy.update(time.get_ticks(), move_down)
-                    self.screen.blit(self.images["enemy1"], enemy.rect)
+                    self.screen.blit(enemy.image, enemy.rect)
                     self.mMap.update_map(coord_enemies, TypeEnum.ENEMY)
                 time.set_timer(self.enemy_move_event, self.move_time)
+
+    def show_game_over_screen(self, current_time, timer):
+        self.screen.blit(self.background_img, (0,0))
+        self.draw_text("GAME OVER", 64 , self.mMap.TileWidth * 7 , self.mMap.TileHeight * 2, (255, 255, 255))
+        self.draw_text(("SCORE " + str(self.score)), 25, self.mMap.TileWidth * 7, self.mMap.TileHeight * 4 , (255,255,255))
+        self.draw_text("Press a key to start again" , 25,self.mMap.TileWidth * 7, self.mMap.TileHeight * 6,(255, 255, 255))
+        display.flip()
+        waiting = True
+        while waiting:
+            self.clock.tick(self.Fps)
+            for EVENT in event.get():
+                if EVENT.type == QUIT:
+                    quit()
+                if EVENT.type == KEYUP:
+                    if time.get_ticks() - current_time > timer:
+                        waiting = False
+
+    def reset(self):
+        self.mPlayer.lives = 3
+        self.score = 0
+        self.mEnemiesSpriteGroup.empty()
+        self.mAllSpritesGroup.empty()
+
+        self.add_enemies(8, 1, self.images["enemy1"])
+        self.add_enemies(8, 2, self.images["enemy2"])
+        self.add_enemies(8, 3, self.images["enemy3"])
+
+        self.add_player(self.images["player_ship"])
+
+        display.flip()
 
     def main(self):
 
         while self.running:
 
             self.clock.tick(self.Fps)
+
+            if self.game_over:
+                self.show_game_over_screen(time.get_ticks(), 1000)
+                self.reset()
+                self.game_over = False
 
             if self.mPlayer.invulnerability_frame > 0:
                 self.mPlayer.invulnerability_frame -= 1
@@ -168,7 +204,7 @@ class Game:
                 self.score += enemy.value
 
             if sprite.spritecollide(self.mPlayer, self.mEnemiesSpriteGroup, False):
-                self.running = False
+                self.game_over = True
 
             if sprite.spritecollide(self.mPlayer, self.mEnemiesBulletsSpriteGroup, False):
                 if self.mPlayer.lives >= 0 >= self.mPlayer.invulnerability_frame:
@@ -178,21 +214,16 @@ class Game:
 
                 if self.mPlayer.lives <= 0:
                     self.sounds["shipexplosion"].play()
-                    self.running = False
+                    self.game_over = True
 
             if not self.mEnemiesSpriteGroup:
                 self.running = False
 
+            if len(self.mEnemiesSpriteGroup) <= 5 and self.shoot_time != 1500:
+                self.shoot_time = 1500
+
             self.screen.blit(self.background_img, (0, 0))
             self.mAllSpritesGroup.draw(self.screen)
-
-            print(str(self.mPlayer.invulnerability_frame))
-
-            # Print the Grid for degug purpose
-            # for Row in range(11):
-            #     draw.line(self.screen, (255, 255, 255), (0, Row * 64), (900, 64 * Row), 4)
-            #     for Column in range(14):
-            #         draw.line(self.screen, (255, 255, 255), (Column * 64, 0), (Column * 64, 700), 4)
 
             self.draw_text("SCORE ", 25, self.mMap.TileWidth, 10, (255, 255, 255))
             self.draw_text(str(self.score), 25, self.mMap.TileWidth * 2, 10, (78, 255, 87))

@@ -5,8 +5,9 @@ from pygame import *
 Black = 0, 0, 0
 White = 255, 255, 255
 RED = (255, 0, 0)
+SIZE = (900,700)
 
-SCREEN = display.set_mode((900, 700))
+SCREEN = display.set_mode(SIZE)
 
 mGame = Game(SCREEN)
 

@@ -27,13 +27,13 @@ class Player(ObjectBoard):
                 self.column = self.column - 1
                 while self.rect.left != (self.TileWidth * self.column + self.TileMargin):
                     time2.sleep(0.0050)
-                    self.rect.left = self.rect.left - 4
+                    self.rect.left = self.rect.left - 8
         if keys[K_RIGHT] or keys[K_d]:
             if self.column <= 12:
                 self.column = self.column + 1
                 while self.rect.left != (self.TileWidth * self.column + self.TileMargin):
                     time2.sleep(0.0050)
-                    self.rect.left = self.rect.left + 4
+                    self.rect.left = self.rect.left + 8
 
         Coord = namedtuple('Coord', ['row', 'column', 'old_row', 'old_column'])
         coord = Coord(self.row, column=self.column, old_row=old_row, old_column=old_column)

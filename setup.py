@@ -1,9 +1,10 @@
 from cx_Freeze import setup, Executable
+
 exe = Executable(
-script="main.py",
+    script="main.py",
 )
 
 setup(
-    executables = [exe],
-    version="1.0.0"
-    )
+    executables=[exe],
+    version="1.0.0", requires=['cx_Freeze', 'pygame']
+)

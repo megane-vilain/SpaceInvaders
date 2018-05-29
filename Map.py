@@ -9,6 +9,7 @@ class Map(object):
         self.MapRow = row
         self.MapColumn = column
         self.Grid = []
+        self.size = width, height = 900, 700
         self.TileWidth = 64
         self.TileHeight = 64
         self.TileMargin = 4
