@@ -20,7 +20,6 @@ class Game:
         self.mPlayer = None
         self.mEnemy = None
         self.mBullet = None
-        self.size = width, height = 900, 668
         self.Fps = 60
         self.running = True
         self.Sound_dir = path.join(path.dirname(__file__), 'Sounds')
@@ -31,6 +30,8 @@ class Game:
         self.row = 1
         self.score = 0
         self.font_name = font.match_font('arial')
+        self.end_game = False
+        self.load_screen = True
         self.game_over = False
 
         # Custom Pygame events
@@ -130,11 +131,28 @@ class Game:
                     self.mMap.update_map(coord_enemies, TypeEnum.ENEMY)
                 time.set_timer(self.enemy_move_event, self.move_time)
 
-    def show_game_over_screen(self, current_time, timer):
+    def show_game_over_screen(self,title , current_time, timer):
         self.screen.blit(self.background_img, (0,0))
-        self.draw_text("GAME OVER", 64 , self.mMap.TileWidth * 7 , self.mMap.TileHeight * 2, (255, 255, 255))
+        self.draw_text(title, 64 , self.mMap.TileWidth * 7 , self.mMap.TileHeight * 2, (255, 255, 255))
         self.draw_text(("SCORE " + str(self.score)), 25, self.mMap.TileWidth * 7, self.mMap.TileHeight * 4 , (255,255,255))
         self.draw_text("Press a key to start again" , 25,self.mMap.TileWidth * 7, self.mMap.TileHeight * 6,(255, 255, 255))
+        display.flip()
+        waiting = True
+        while waiting:
+            self.clock.tick(self.Fps)
+            for EVENT in event.get():
+                if EVENT.type == QUIT:
+                    quit()
+                if EVENT.type == KEYUP:
+                    if time.get_ticks() - current_time > timer:
+                        waiting = False
+
+    def show_load_screen(self, current_time, timer):
+        self.screen.blit(self.background_img, (0,0))
+        self.draw_text(" SPACE INVADERS", 64, self.mMap.TileWidth * 7, self.mMap.TileHeight * 2, (255, 255, 255))
+        self.screen.blit(self.images["space_invaders_main"], (self.mMap.TileWidth * 6, self.mMap.TileHeight * 4))
+        self.draw_text("Press a key to start", 25, self.mMap.TileWidth * 7, self.mMap.TileHeight * 6,
+                       (255, 255, 255))
         display.flip()
         waiting = True
         while waiting:
@@ -151,6 +169,8 @@ class Game:
         self.score = 0
         self.mEnemiesSpriteGroup.empty()
         self.mAllSpritesGroup.empty()
+        self.mMap.init_map()
+        self.row = 1
 
         self.add_enemies(8, 1, self.images["enemy1"])
         self.add_enemies(8, 2, self.images["enemy2"])
@@ -166,10 +186,19 @@ class Game:
 
             self.clock.tick(self.Fps)
 
-            if self.game_over:
-                self.show_game_over_screen(time.get_ticks(), 1000)
+            if self.load_screen:
+                self.show_load_screen(time.get_ticks(), 1000)
+                self.load_screen = False
+
+            if self.end_game:
+                if self.game_over:
+                    self.game_over = False
+                    self.show_game_over_screen("GAME OVER", time.get_ticks(), 1000)
+                else:
+                    self.show_game_over_screen("CONGRATULATIONS", time.get_ticks(), 1000)
                 self.reset()
-                self.game_over = False
+                self.end_game = False
+
 
             if self.mPlayer.invulnerability_frame > 0:
                 self.mPlayer.invulnerability_frame -= 1
@@ -193,7 +222,7 @@ class Game:
                 coord_bullets = bullet.update(time.get_ticks())
                 self.screen.blit(self.images["player_laser"], bullet.rect)
                 if coord_bullets.row != coord_bullets.old_row:
-                    if coord_bullets.row == -1 or 0 < coord_bullets.row < 10:
+                    if coord_bullets.row == 0 < coord_bullets.row < 10:
                         self.mMap.update_map(coord_bullets, TypeEnum.BULLET)
                     if coord_bullets.row < -1 or coord_bullets.row > 10:
                         bullet.kill()
@@ -204,7 +233,7 @@ class Game:
                 self.score += enemy.value
 
             if sprite.spritecollide(self.mPlayer, self.mEnemiesSpriteGroup, False):
-                self.game_over = True
+                self.end_game = True
 
             if sprite.spritecollide(self.mPlayer, self.mEnemiesBulletsSpriteGroup, False):
                 if self.mPlayer.lives >= 0 >= self.mPlayer.invulnerability_frame:
@@ -214,10 +243,11 @@ class Game:
 
                 if self.mPlayer.lives <= 0:
                     self.sounds["shipexplosion"].play()
+                    self.end_game = True
                     self.game_over = True
 
             if not self.mEnemiesSpriteGroup:
-                self.running = False
+                self.end_game = True
 
             if len(self.mEnemiesSpriteGroup) <= 5 and self.shoot_time != 1500:
                 self.shoot_time = 1500
@@ -232,3 +262,4 @@ class Game:
 
             display.update()
             display.flip()
+

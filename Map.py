@@ -14,6 +14,9 @@ class Map(object):
         self.TileHeight = 64
         self.TileMargin = 4
 
+        self.init_map()
+
+    def init_map(self):
         for Row in range(self.MapRow):
             self.Grid.append([])
             for Column in range(self.MapColumn):
