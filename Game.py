@@ -26,15 +26,15 @@ class Game:
         self.Sound_dir = path.join(path.dirname(__file__), 'Sounds')
         self.Img_dir = path.join(path.dirname(__file__), 'Images')
         self.background_img = image.load(path.join(self.Img_dir, 'space.jpg')).convert()
-        self.shoot_time = 450
-        self.move_time = 500
+        self.shoot_time = 900
+        self.move_time = 900
 
         self.reloaded_event = USEREVENT + 1
         self.enemy_move_event = USEREVENT + 2
 
-        self.init_pygame()
+        self.init()
 
-    def init_pygame(self):
+    def init(self):
         init()
         mixer.init()
         display.set_caption('Space Invaders')
@@ -53,8 +53,8 @@ class Game:
         self.images["player_life"].set_colorkey((0, 0, 0))
 
     def load_sounds(self):
-        SND_NAMES = ["shoot", "expl3", "main"]
-        self.sounds = {name: mixer.Sound("Sounds/{}.wav".format(name)) for name in SND_NAMES}
+        snd_names = ["shoot", "expl3", "main"]
+        self.sounds = {name: mixer.Sound("Sounds/{}.wav".format(name)) for name in snd_names}
         mixer.music.load("Sounds/main.wav")
         mixer.music.set_volume(0.2)
         mixer.music.play(loops=-1)
@@ -71,7 +71,7 @@ class Game:
             self.mEnemy = Enemy(row, 3 + i, enemy_img)
             self.mAllSpritesGroup.add(self.mEnemy)
             self.mEnemiesSpriteGroup.add(self.mEnemy)
-            self.mMap.Grid[0][2 + i] = TypeEnum.ENEMY
+            self.mMap.Grid[row][3 + i] = TypeEnum.ENEMY
 
     def add_player(self, player_img):
         self.mPlayer = Player(9, 6, player_img)
@@ -86,11 +86,13 @@ class Game:
         self.sounds["shoot"].play()
 
     def main(self):
-        move_down = False
         row = 1
         while self.running:
 
             self.clock.tick(self.Fps)
+
+            if self.mPlayer.invulnerability_frames > 0:
+                self.mPlayer.invulnerability_frames -= 1
             for EVENT in event.get():
                 if EVENT.type == QUIT:
                     sys.exit()
@@ -123,16 +125,6 @@ class Game:
             if coord.column != coord.old_column:
                 self.mMap.update_map(coord, TypeEnum.PLAYER)
 
-            # if self.mMap.Grid[row][13] == TypeEnum.ENEMY or self.mMap.Grid[row][0] == TypeEnum.ENEMY:
-            #     move_down = True
-            #     row += 1
-
-            # for enemy in self.mEnemiesSpriteGroup:
-            #     coord_enemies = enemy.update(time.get_ticks(), move_down)
-            #     self.mMap.update_map(coord_enemies, TypeEnum.ENEMY)
-            #
-            # move_down = False
-
             for bullet in self.mBulletsSpriteGroup:
                 coord_bullets = bullet.update(time.get_ticks())
                 if coord_bullets.row != coord_bullets.old_row:
@@ -149,17 +141,17 @@ class Game:
                 if self.mPlayer.lives != 0:
                     self.mPlayer.lives -= 1
                     # player.hide()
-                    player_invulnerable_frames = 30
+                    self.mPlayer.invulnerability_frames = 30
                 else:
                     self.running = False
 
             if sprite.spritecollide(self.mPlayer, self.mBulletsSpriteGroup, False):
                 if self.mPlayer.invulnerability_frames <= 0 and self.mPlayer.lives != 0:
                     self.mPlayer.lives -= 1
+                    self.mPlayer.invulnerability_frames = 30
 
                 else:
-                    running = False
-                    self.mPlayer.invulnerability_frames = 30
+                    self.running = False
 
             if not self.mEnemiesSpriteGroup:
                 self.running = False

@@ -35,7 +35,7 @@ class Map(object):
 
     def is_first(self, row, column ):
         for i in range(row +1, self.MapRow -1):
-            if self.Grid[i][column] != TypeEnum.EMPTY:
+            if self.Grid[i][column] == TypeEnum.ENEMY:
                 return False
 
         return True
