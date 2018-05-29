@@ -9,6 +9,7 @@ class Enemy(ObjectBoard):
         self.column = column
         self.speed = 1
         self.image = image
+        self.value = 50
         super().__init__(self.image, self.row, self.column)
 
     def update(self, current_time, move_down ):
