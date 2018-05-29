@@ -11,8 +11,6 @@ class Player(ObjectBoard):
         self.lives = 3
         self.image = image
         self.invulnerability_frames = 0
-        self.hidden = False
-        self.hide_timer = 1000
         super().__init__(image, self.row, self.column)
 
     def update(self):

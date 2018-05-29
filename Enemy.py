@@ -9,6 +9,8 @@ class Enemy(ObjectBoard):
         self.column = column
         self.speed = 1
         self.image = image
+        self.timer = time.get_ticks()
+        self.move_time = 700
         super().__init__(self.image, self.row, self.column)
 
     def update(self, current_time, move_down ):
@@ -23,8 +25,10 @@ class Enemy(ObjectBoard):
             self.speed *= -1
             self.rect.top = (self.TileHeight * self.row + self.TileMargin)
             self.rect.left = (self.TileWidth * self.column + self.TileMargin)
+            self.column += self.speed
         else:
             self.rect.left = (self.TileWidth * self.column + self.TileMargin)
+            self.column += self.speed
         Coord = namedtuple('Coord', ['row', 'column', 'old_row', 'old_column'])
         coord = Coord(self.row, column=self.column, old_row=old_row, old_column=old_column)
         return coord
