@@ -22,8 +22,9 @@ class Enemy(ObjectBoard):
             self.rect.left = (self.tile_width * self.column + self.tile_margin)
             self.column += self.direction
         else:
-            self.rect.left = (self.tile_width * self.column + self.tile_margin)
             self.column += self.direction
+            self.rect.left = (self.tile_width * self.column + self.tile_margin)
+
         Coord = namedtuple('Coord', ['row', 'column', 'old_row', 'old_column'])
         coord = Coord(self.row, column=self.column, old_row=old_row, old_column=old_column)
         return coord

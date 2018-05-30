@@ -11,11 +11,11 @@ HEIGHT = 700
 SIZE = (WIDTH, HEIGHT)
 
 #Game options
-FPS = 60
+FPS = 120
 HS_FILE = "highscore.txt"
 
 # Events timer
-ENEMY_SHOOT_TIME = 900
+ENEMY_SHOOT_TIME = 1200
 ENEMY_MOVE_TIME = 900
 
 
