@@ -1,5 +1,6 @@
 from os import path
 import sys
+import csv
 from Enemy import *
 from Player import *
 from Bullet import *
@@ -50,10 +51,7 @@ class Game:
         time.set_timer(self.enemy_move_event, ENEMY_MOVE_TIME)
         self.load_images()
         self.load_sounds()
-        self.add_enemies(8, 1, self.images["enemy1"])
-        self.add_enemies(8, 2, self.images["enemy2"])
-        self.add_enemies(8, 3, self.images["enemy3"])
-        self.add_player(self.images["player_ship"])
+        self.add_objects()
         self.get_data()
 
     def load_images(self):
@@ -72,6 +70,12 @@ class Game:
         mixer.music.load("Sounds/main.wav")
         mixer.music.play(loops=-1)
 
+    def add_objects(self):
+        self.add_enemies(8, 1, self.images["enemy1"])
+        self.add_enemies(8, 2, self.images["enemy2"])
+        self.add_enemies(8, 3, self.images["enemy3"])
+        self.add_player(9,6,self.images["player_ship"])
+
     def draw_lives(self, img, lives):
         for i in range(lives):
             img_rect = img.get_rect()
@@ -79,12 +83,12 @@ class Game:
             img_rect.y = self.mMap.tile_height / 2
             self.screen.blit(img, img_rect)
 
-    def draw_text(self, text, size, x, y, color):
+    def draw_text(self, screen, text, size, x, y, color):
         mfont = font.Font(self.font_name, size)
         text_surface = mfont.render(text, True, color)
         text_rect = text_surface.get_rect()
         text_rect.midtop = (x, y)
-        self.screen.blit(text_surface, text_rect)
+        screen.blit(text_surface, text_rect)
 
     def add_enemies(self, enemies_number, row, enemy_img):
         for i in range(enemies_number):
@@ -93,8 +97,8 @@ class Game:
             self.mEnemiesSpriteGroup.add(self.mEnemy)
             self.mMap.grid[row][3 + i] = TypeEnum.ENEMY
 
-    def add_player(self, player_img):
-        self.mPlayer = Player(9, 6, player_img)
+    def add_player(self,row, column,  player_img):
+        self.mPlayer = Player(row, column, player_img)
         self.mAllSpritesGroup.add(self.mPlayer)
         self.mMap.grid[self.mPlayer.row][self.mPlayer.column] = TypeEnum.PLAYER
 
@@ -120,6 +124,8 @@ class Game:
                     self.add_bullet(self.images["player_laser"], self.mPlayer.row - 1, self.mPlayer.column, -1,
                                     TypeEnum.PLAYER)
 
+            if EVENT.type == KEYDOWN and EVENT.key == K_ESCAPE:
+                self.show_beak_screen()
             if EVENT.type == self.enemy_shoot_event:
                 if not self.enemies_moving:
                     random_enemy = random.choice(self.mEnemiesSpriteGroup.sprites())
@@ -139,17 +145,13 @@ class Game:
                     coord_enemies = enemy.update(time.get_ticks(), move_down)
                     self.screen.blit(enemy.image, enemy.rect)
                     self.mMap.update_map(coord_enemies, TypeEnum.ENEMY)
-                    print("row : " + str(coord_enemies.row) + " column : " + str(coord_enemies.column))
-                    if coord_enemies.column == 4:
-                        print("Test")
-                    if coord_enemies.column == 14:
-                        print("Test")
+
                 time.set_timer(self.enemy_move_event, ENEMY_MOVE_TIME)
                 self.enemies_moving = False
 
     def show_game_over_screen(self, title, current_time, timer):
         self.screen.blit(self.background_img, (0, 0))
-        self.draw_text(title, 64, self.mMap.tile_width * 7, self.mMap.tile_height * 2, WHITE)
+        self.draw_text(self.screen, title, 64, self.mMap.tile_width * 7, self.mMap.tile_height * 2, WHITE)
 
         if self.score > self.high_score:
             self.draw_text(("NEW HIGH SCORE " + str(self.score)), 25, self.mMap.tile_width * 7,
@@ -159,7 +161,8 @@ class Game:
             self.draw_text(("SCORE " + str(self.score)), 25, self.mMap.tile_width * 7,
                            self.mMap.tile_height * 4,
                            WHITE)
-        self.draw_text("Press a key to start again", 25, self.mMap.tile_width * 7, self.mMap.tile_height * 6,
+        self.draw_text(self.screen, "Press a key to start again", 25, self.mMap.tile_width * 7,
+                       self.mMap.tile_height * 6,
                        WHITE)
         display.flip()
         waiting = True
@@ -174,11 +177,12 @@ class Game:
 
     def show_load_screen(self, current_time, timer):
         self.screen.blit(self.background_img, (0, 0))
-        self.draw_text(" SPACE INVADERS", 64, self.mMap.tile_width * 7, self.mMap.tile_height * 2, WHITE)
-        self.draw_text("HIGH SCORE " + str(self.high_score), 35, self.mMap.tile_width * 7, self.mMap.tile_width * 4,
+        self.draw_text(self.screen, " SPACE INVADERS", 64, self.mMap.tile_width * 7, self.mMap.tile_height * 2, WHITE)
+        self.draw_text(self.screen, "HIGH SCORE " + str(self.high_score), 35, self.mMap.tile_width * 7,
+                       self.mMap.tile_width * 4,
                        WHITE)
         self.screen.blit(self.images["space_invaders_main"], (self.mMap.tile_width * 6, self.mMap.tile_height * 5))
-        self.draw_text("Press a key to start", 25, self.mMap.tile_width * 7, self.mMap.tile_height * 7,
+        self.draw_text(self.screen, "Press a key to start", 25, self.mMap.tile_width * 7, self.mMap.tile_height * 7,
                        WHITE)
         display.flip()
         waiting = True
@@ -191,6 +195,32 @@ class Game:
                     if time.get_ticks() - current_time > timer:
                         waiting = False
 
+    def show_beak_screen(self):
+        self.screen.blit(self.background_img, (0, 0))
+        rect = Rect(400, 200, 100, 50)
+        rect2 = Rect(400, 600, 100, 50)
+        self.draw_text(self.screen, "Sauvegarder", 25, 400, 200, WHITE)
+        self.draw_text(self.screen, "Charger", 25, 600, 200, WHITE)
+
+        display.flip()
+        waiting = True
+        while waiting:
+            self.clock.tick(FPS)
+            for EVENT in event.get():
+                if EVENT.type == MOUSEBUTTONDOWN:
+                    pos = mouse.get_pos()
+                    if 500 > pos[0] > 300 and 300 > pos[1] > 200:
+                        self.save_game()
+                        waiting = False
+
+                    if 700 > pos[0] > 500 and 300 > pos[1] > 200:
+                        self.load_map()
+                        waiting = False
+                if EVENT.type == KEYDOWN and EVENT.key == K_ESCAPE:
+                    waiting = False
+
+        display.flip()
+
     def get_data(self):
         with open(path.join(path.dirname(__file__), HS_FILE), 'r') as f:
             try:
@@ -202,6 +232,48 @@ class Game:
         with open(path.join(path.dirname(__file__), HS_FILE), 'w+') as f:
             f.write(str(self.score))
 
+    def save_game(self):
+        with open(path.join(path.dirname(__file__), CSV_FILE), 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=",")
+            for row in range(self.mMap.map_row):
+                writer.writerow(self.mMap.get_row_string(row))
+
+        with open(path.join(path.dirname(__file__), SAVE_FILE), 'w+') as f:
+            f.write(str(self.score) + "-" + str(self.mPlayer.lives) )
+
+    def load_map(self):
+        self.reset()
+        display.flip()
+        with open(path.join(path.dirname(__file__), CSV_FILE), 'r', newline='') as csvfile:
+            reader = csv.reader(csvfile, delimiter=",")
+            row = 0
+            for reader_row in reader:
+                i = len(reader_row)
+                column = 0
+                for element in reader_row :
+                    if element != "2":
+                        if element == "3":
+                            enemy = Enemy(row, column, self.images["enemy1"])
+                            self.mEnemiesSpriteGroup.add(enemy)
+                            self.mAllSpritesGroup.add(enemy)
+                        if element == "1":
+                            player = Player(row, column, self.images["player_ship"])
+                            self.mPlayer  = player
+                            self.mAllSpritesGroup.add(player)
+                        self.mMap.grid[row][column] = TypeEnum(int(element))
+
+                    column += 1
+                row +=1
+        with open(path.join(path.dirname(__file__), SAVE_FILE), 'r') as f:
+            try:
+
+                   s = f.read()
+                   self.score = int(s.split("-")[0])
+                   self.mPlayer.lives = int(s.split("-")[1])
+            except:
+                self.score = 0
+
+
     def reset(self):
         self.mPlayer.lives = 3
         self.score = 0
@@ -209,14 +281,6 @@ class Game:
         self.mAllSpritesGroup.empty()
         self.mMap.init_map()
         self.row = 1
-
-        self.add_enemies(8, 1, self.images["enemy1"])
-        self.add_enemies(8, 2, self.images["enemy2"])
-        self.add_enemies(8, 3, self.images["enemy3"])
-
-        self.add_player(self.images["player_ship"])
-
-        display.flip()
 
     def main(self):
 
@@ -236,6 +300,8 @@ class Game:
                     self.show_game_over_screen("CONGRATULATIONS", time.get_ticks(), 700)
                     self.save_score()
                 self.reset()
+                self.add_objects()
+                display.flip()
                 self.end_game = False
 
             if self.mPlayer.invulnerability_frame > 0:
@@ -297,15 +363,11 @@ class Game:
             self.screen.blit(self.background_img, (0, 0))
             self.mAllSpritesGroup.draw(self.screen)
 
-            self.draw_text("SCORE ", 25, self.mMap.tile_width, 10, WHITE)
-            self.draw_text(str(self.score), 25, self.mMap.tile_width * 2, 10, BLUE)
+            self.draw_text(self.screen, "SCORE ", 25, self.mMap.tile_width, 10, WHITE)
+            self.draw_text(self.screen, str(self.score), 25, self.mMap.tile_width * 2, 10, BLUE)
 
             self.draw_lives(self.images["player_life"], self.mPlayer.lives)
 
-            for Row in range(11):
-                draw.line(self.screen, (255, 255, 255), (0, Row * 64), (900, 64 * Row), 4)
-                for Column in range(14):
-                    draw.line(self.screen, (255, 255, 255), (Column * 64, 0), (Column * 64, 700), 4)
 
             display.update()
             display.flip()

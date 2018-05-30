@@ -31,3 +31,9 @@ class Map(object):
         """
         self.grid[coord.old_row][coord.old_column] = TypeEnum.EMPTY
         self.grid[coord.row][coord.column] = type
+
+    def get_row_string(self, row):
+        line = ""
+        for column in range(self.map_column):
+            line += str(self.grid[row][column].value)
+        return line

@@ -13,6 +13,8 @@ SIZE = (WIDTH, HEIGHT)
 #Game options
 FPS = 120
 HS_FILE = "highscore.txt"
+CSV_FILE = "map.csv"
+SAVE_FILE = "save.txt"
 
 # Events timer
 ENEMY_SHOOT_TIME = 1200
