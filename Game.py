@@ -1,9 +1,9 @@
-import sys
 from os import path
 from Enemy import *
 from Player import *
 from Bullet import *
 from pygame import *
+from settings import *
 import random
 
 
@@ -20,15 +20,13 @@ class Game:
         self.mPlayer = None
         self.mEnemy = None
         self.mBullet = None
-        self.Fps = 60
         self.running = True
         self.Sound_dir = path.join(path.dirname(__file__), 'Sounds')
         self.Img_dir = path.join(path.dirname(__file__), 'Images')
         self.background_img = image.load(path.join(self.Img_dir, 'space.jpg')).convert()
         self.shoot_time = 900
-        self.move_time = 900
-        self.row = 1
         self.score = 0
+        self.row = 1
         self.font_name = font.match_font('arial')
         self.end_game = False
         self.load_screen = True
@@ -46,12 +44,18 @@ class Game:
         display.set_caption('Space Invaders')
         mixer.music.load(path.join(self.Sound_dir, 'main.wav'))
         time.set_timer(self.enemy_shoot_event, self.shoot_time)
-        time.set_timer(self.enemy_move_event, self.move_time)
+        time.set_timer(self.enemy_move_event, ENEMY_MOVE_TIME)
         self.load_images()
         self.load_sounds()
+        self.add_enemies(8, 1, self.images["enemy1"])
+        self.add_enemies(8, 2, self.images["enemy2"])
+        self.add_enemies(8, 3, self.images["enemy3"])
+
+        self.add_player(self.images["player_ship"])
 
     def load_images(self):
-        img_names = ["player_ship", "player_life", "enemy1", "enemy2", "enemy3", "enemy_laser", "player_laser", "space_invaders_main"]
+        img_names = ["player_ship", "player_life", "enemy1", "enemy2", "enemy3", "enemy_laser", "player_laser",
+                     "space_invaders_main"]
         self.images = {name: image.load("Images/{}.ico".format(name)).convert_alpha()
                        for name in img_names}
         self.images["player_life"] = transform.scale(self.images["player_life"], (30, 30))
@@ -68,8 +72,8 @@ class Game:
     def draw_lives(self, img, lives):
         for i in range(lives):
             img_rect = img.get_rect()
-            img_rect.left = self.mMap.TileWidth * (11 + i) + self.mMap.TileMargin
-            img_rect.y = self.mMap.TileHeight / 2
+            img_rect.left = self.mMap.tile_width * (11 + i) + self.mMap.tile_margin
+            img_rect.y = self.mMap.tile_height / 2
             self.screen.blit(img, img_rect)
 
     def draw_text(self, text, size, x, y, color):
@@ -84,18 +88,18 @@ class Game:
             self.mEnemy = Enemy(row, 3 + i, enemy_img)
             self.mAllSpritesGroup.add(self.mEnemy)
             self.mEnemiesSpriteGroup.add(self.mEnemy)
-            self.mMap.Grid[row][3 + i] = TypeEnum.ENEMY
+            self.mMap.grid[row][3 + i] = TypeEnum.ENEMY
 
     def add_player(self, player_img):
         self.mPlayer = Player(9, 6, player_img)
         self.mAllSpritesGroup.add(self.mPlayer)
-        self.mMap.Grid[self.mPlayer.row][self.mPlayer.column] = TypeEnum.PLAYER
+        self.mMap.grid[self.mPlayer.row][self.mPlayer.column] = TypeEnum.PLAYER
 
-    def add_bullet(self, bullet_img, row, column, direction, type):
+    def add_bullet(self, bullet_img, row, column, direction, object_type):
         self.mBullet = Bullet(row, column, bullet_img, direction)
         self.mAllSpritesGroup.add(self.mBullet)
-        self.mMap.Grid[row][column] = TypeEnum.BULLET
-        if type == TypeEnum.PLAYER:
+        self.mMap.grid[row][column] = TypeEnum.BULLET
+        if object_type == TypeEnum.PLAYER:
             self.mPlayerBulletsSpriteGroup.add(self.mBullet)
         else:
             self.mEnemiesBulletsSpriteGroup.add(self.mBullet)
@@ -119,7 +123,7 @@ class Game:
                 time.set_timer(self.enemy_shoot_event, self.shoot_time)
 
             if EVENT.type == self.enemy_move_event:
-                if self.mMap.Grid[self.row][14] == TypeEnum.ENEMY or self.mMap.Grid[self.row][-1] == TypeEnum.ENEMY:
+                if self.mMap.grid[self.row][14] == TypeEnum.ENEMY or self.mMap.grid[self.row][-1] == TypeEnum.ENEMY:
                     move_down = True
                     self.row += 1
                 else:
@@ -129,17 +133,18 @@ class Game:
                     coord_enemies = enemy.update(time.get_ticks(), move_down)
                     self.screen.blit(enemy.image, enemy.rect)
                     self.mMap.update_map(coord_enemies, TypeEnum.ENEMY)
-                time.set_timer(self.enemy_move_event, self.move_time)
+                time.set_timer(self.enemy_move_event, ENEMY_MOVE_TIME)
 
-    def show_game_over_screen(self,title , current_time, timer):
-        self.screen.blit(self.background_img, (0,0))
-        self.draw_text(title, 64 , self.mMap.TileWidth * 7 , self.mMap.TileHeight * 2, (255, 255, 255))
-        self.draw_text(("SCORE " + str(self.score)), 25, self.mMap.TileWidth * 7, self.mMap.TileHeight * 4 , (255,255,255))
-        self.draw_text("Press a key to start again" , 25,self.mMap.TileWidth * 7, self.mMap.TileHeight * 6,(255, 255, 255))
+    def show_game_over_screen(self, title, current_time, timer):
+        self.screen.blit(self.background_img, (0, 0))
+        self.draw_text(title, 64, self.mMap.tile_width * 7, self.mMap.tile_height * 2, (255, 255, 255))
+        self.draw_text(("SCORE " + str(self.score)), 25, self.mMap.tile_width * 7, self.mMap.tile_height * 4, (255, 255, 255))
+        self.draw_text("Press a key to start again", 25, self.mMap.tile_width * 7, self.mMap.tile_height * 6,
+                       (255, 255, 255))
         display.flip()
         waiting = True
         while waiting:
-            self.clock.tick(self.Fps)
+            self.clock.tick(FPS)
             for EVENT in event.get():
                 if EVENT.type == QUIT:
                     quit()
@@ -148,15 +153,15 @@ class Game:
                         waiting = False
 
     def show_load_screen(self, current_time, timer):
-        self.screen.blit(self.background_img, (0,0))
-        self.draw_text(" SPACE INVADERS", 64, self.mMap.TileWidth * 7, self.mMap.TileHeight * 2, (255, 255, 255))
-        self.screen.blit(self.images["space_invaders_main"], (self.mMap.TileWidth * 6, self.mMap.TileHeight * 4))
-        self.draw_text("Press a key to start", 25, self.mMap.TileWidth * 7, self.mMap.TileHeight * 6,
+        self.screen.blit(self.background_img, (0, 0))
+        self.draw_text(" SPACE INVADERS", 64, self.mMap.tile_width * 7, self.mMap.tile_height * 2, (255, 255, 255))
+        self.screen.blit(self.images["space_invaders_main"], (self.mMap.tile_width * 6, self.mMap.tile_height * 4))
+        self.draw_text("Press a key to start", 25, self.mMap.tile_width * 7, self.mMap.tile_height * 6,
                        (255, 255, 255))
         display.flip()
         waiting = True
         while waiting:
-            self.clock.tick(self.Fps)
+            self.clock.tick(FPS)
             for EVENT in event.get():
                 if EVENT.type == QUIT:
                     quit()
@@ -184,7 +189,7 @@ class Game:
 
         while self.running:
 
-            self.clock.tick(self.Fps)
+            self.clock.tick(FPS)
 
             if self.load_screen:
                 self.show_load_screen(time.get_ticks(), 1000)
@@ -198,7 +203,6 @@ class Game:
                     self.show_game_over_screen("CONGRATULATIONS", time.get_ticks(), 1000)
                 self.reset()
                 self.end_game = False
-
 
             if self.mPlayer.invulnerability_frame > 0:
                 self.mPlayer.invulnerability_frame -= 1
@@ -228,7 +232,7 @@ class Game:
                         bullet.kill()
 
             for enemy in sprite.groupcollide(self.mEnemiesSpriteGroup, self.mPlayerBulletsSpriteGroup, True, True):
-                self.mMap.Grid[enemy.row][enemy.column] = TypeEnum.EMPTY
+                self.mMap.grid[enemy.row][enemy.column] = TypeEnum.EMPTY
                 self.sounds["expl3"].play()
                 self.score += enemy.value
 
@@ -255,11 +259,10 @@ class Game:
             self.screen.blit(self.background_img, (0, 0))
             self.mAllSpritesGroup.draw(self.screen)
 
-            self.draw_text("SCORE ", 25, self.mMap.TileWidth, 10, (255, 255, 255))
-            self.draw_text(str(self.score), 25, self.mMap.TileWidth * 2, 10, (78, 255, 87))
+            self.draw_text("SCORE ", 25, self.mMap.tile_width, 10, (255, 255, 255))
+            self.draw_text(str(self.score), 25, self.mMap.tile_width * 2, 10, (78, 255, 87))
 
             self.draw_lives(self.images["player_life"], self.mPlayer.lives)
 
             display.update()
             display.flip()
-

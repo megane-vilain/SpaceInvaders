@@ -6,22 +6,22 @@ class Map(object):
 
     def __init__(self, row, column):
 
-        self.MapRow = row
-        self.MapColumn = column
-        self.Grid = []
+        self.map_row = row
+        self.map_column = column
+        self.grid = []
         self.size = width, height = 900, 700
-        self.TileWidth = 64
-        self.TileHeight = 64
-        self.TileMargin = 4
+        self.tile_width = 64
+        self.tile_height = 64
+        self.tile_margin = 4
 
         self.init_map()
 
     def init_map(self):
-        for Row in range(self.MapRow):
-            self.Grid.append([])
-            for Column in range(self.MapColumn):
-                self.Grid[Row].append([])
-                self.Grid[Row][Column] = TypeEnum.EMPTY
+        for row in range(self.map_row):
+            self.grid.append([])
+            for column in range(self.map_column):
+                self.grid[row].append([])
+                self.grid[row][column] = TypeEnum.EMPTY
 
     def update_map(self, coord, type):
         """
@@ -29,5 +29,5 @@ class Map(object):
         :param coord: Old and new coordinates of the object
         :param type: TypeEnum to update
         """
-        self.Grid[coord.old_row][coord.old_column] = TypeEnum.EMPTY
-        self.Grid[coord.row][coord.column] = type
+        self.grid[coord.old_row][coord.old_column] = TypeEnum.EMPTY
+        self.grid[coord.row][coord.column] = type

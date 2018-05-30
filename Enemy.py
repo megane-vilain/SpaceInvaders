@@ -5,12 +5,8 @@ from ObjectBoard import *
 
 class Enemy(ObjectBoard):
     def __init__(self, row, column, image):
-        self.row = row
-        self.column = column
-        self.speed = 1
-        self.image = image
         self.value = 50
-        super().__init__(self.image, self.row, self.column)
+        super().__init__(image, row, column)
 
     def update(self, current_time, move_down ):
         """
@@ -21,13 +17,13 @@ class Enemy(ObjectBoard):
         old_column = self.column
         if move_down:
             self.row += 1
-            self.speed *= -1
-            self.rect.top = (self.TileHeight * self.row + self.TileMargin)
-            self.rect.left = (self.TileWidth * self.column + self.TileMargin)
-            self.column += self.speed
+            self.direction *= -1
+            self.rect.top = (self.tile_height * self.row + self.tile_margin)
+            self.rect.left = (self.tile_width * self.column + self.tile_margin)
+            self.column += self.direction
         else:
-            self.rect.left = (self.TileWidth * self.column + self.TileMargin)
-            self.column += self.speed
+            self.rect.left = (self.tile_width * self.column + self.tile_margin)
+            self.column += self.direction
         Coord = namedtuple('Coord', ['row', 'column', 'old_row', 'old_column'])
         coord = Coord(self.row, column=self.column, old_row=old_row, old_column=old_column)
         return coord
