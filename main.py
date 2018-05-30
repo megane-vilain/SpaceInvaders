@@ -6,8 +6,6 @@ SCREEN = display.set_mode(SIZE)
 
 mGame = Game(SCREEN)
 
-
-
 mGame.main()
 
 quit()

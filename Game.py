@@ -31,6 +31,7 @@ class Game:
         self.end_game = False
         self.load_screen = True
         self.game_over = False
+        self.high_score = 0
 
         # Custom Pygame events
         self.enemy_shoot_event = USEREVENT + 1
@@ -50,8 +51,8 @@ class Game:
         self.add_enemies(8, 1, self.images["enemy1"])
         self.add_enemies(8, 2, self.images["enemy2"])
         self.add_enemies(8, 3, self.images["enemy3"])
-
         self.add_player(self.images["player_ship"])
+        self.get_data()
 
     def load_images(self):
         img_names = ["player_ship", "player_life", "enemy1", "enemy2", "enemy3", "enemy_laser", "player_laser",
@@ -137,10 +138,17 @@ class Game:
 
     def show_game_over_screen(self, title, current_time, timer):
         self.screen.blit(self.background_img, (0, 0))
-        self.draw_text(title, 64, self.mMap.tile_width * 7, self.mMap.tile_height * 2, (255, 255, 255))
-        self.draw_text(("SCORE " + str(self.score)), 25, self.mMap.tile_width * 7, self.mMap.tile_height * 4, (255, 255, 255))
+        self.draw_text(title, 64, self.mMap.tile_width * 7, self.mMap.tile_height * 2, WHITE)
+
+        if self.score > self.high_score:
+            self.draw_text(("NEW HIGH SCORE " + str(self.score)), 25, self.mMap.tile_width * 7, self.mMap.tile_height * 4,
+                           WHITE)
+        else:
+            self.draw_text(("SCORE " + str(self.score)), 25, self.mMap.tile_width * 7,
+                           self.mMap.tile_height * 4,
+                           WHITE)
         self.draw_text("Press a key to start again", 25, self.mMap.tile_width * 7, self.mMap.tile_height * 6,
-                       (255, 255, 255))
+                       WHITE)
         display.flip()
         waiting = True
         while waiting:
@@ -154,10 +162,11 @@ class Game:
 
     def show_load_screen(self, current_time, timer):
         self.screen.blit(self.background_img, (0, 0))
-        self.draw_text(" SPACE INVADERS", 64, self.mMap.tile_width * 7, self.mMap.tile_height * 2, (255, 255, 255))
-        self.screen.blit(self.images["space_invaders_main"], (self.mMap.tile_width * 6, self.mMap.tile_height * 4))
-        self.draw_text("Press a key to start", 25, self.mMap.tile_width * 7, self.mMap.tile_height * 6,
-                       (255, 255, 255))
+        self.draw_text(" SPACE INVADERS", 64, self.mMap.tile_width * 7, self.mMap.tile_height * 2, WHITE)
+        self.draw_text("HIGH SCORE " + str(self.high_score), 35, self.mMap.tile_width * 7, self.mMap.tile_width * 4, WHITE )
+        self.screen.blit(self.images["space_invaders_main"], (self.mMap.tile_width * 6, self.mMap.tile_height * 5))
+        self.draw_text("Press a key to start", 25, self.mMap.tile_width * 7, self.mMap.tile_height * 7,
+                       WHITE)
         display.flip()
         waiting = True
         while waiting:
@@ -168,6 +177,17 @@ class Game:
                 if EVENT.type == KEYUP:
                     if time.get_ticks() - current_time > timer:
                         waiting = False
+
+    def get_data(self):
+        with open(path.join(path.dirname(__file__), HS_FILE), 'r') as f:
+            try:
+                self.high_score = int(f.read())
+            except:
+                self.high_score = 0
+
+    def save_score(self):
+        with open(path.join(path.dirname(__file__), HS_FILE), 'w+') as f:
+            f.write(str(self.score))
 
     def reset(self):
         self.mPlayer.lives = 3
@@ -192,7 +212,7 @@ class Game:
             self.clock.tick(FPS)
 
             if self.load_screen:
-                self.show_load_screen(time.get_ticks(), 1000)
+                self.show_load_screen(time.get_ticks(), 700)
                 self.load_screen = False
 
             if self.end_game:
@@ -200,7 +220,8 @@ class Game:
                     self.game_over = False
                     self.show_game_over_screen("GAME OVER", time.get_ticks(), 1000)
                 else:
-                    self.show_game_over_screen("CONGRATULATIONS", time.get_ticks(), 1000)
+                    self.show_game_over_screen("CONGRATULATIONS", time.get_ticks(), 700)
+                    self.save_score()
                 self.reset()
                 self.end_game = False
 
@@ -259,8 +280,8 @@ class Game:
             self.screen.blit(self.background_img, (0, 0))
             self.mAllSpritesGroup.draw(self.screen)
 
-            self.draw_text("SCORE ", 25, self.mMap.tile_width, 10, (255, 255, 255))
-            self.draw_text(str(self.score), 25, self.mMap.tile_width * 2, 10, (78, 255, 87))
+            self.draw_text("SCORE ", 25, self.mMap.tile_width, 10, WHITE)
+            self.draw_text(str(self.score), 25, self.mMap.tile_width * 2, 10, BLUE)
 
             self.draw_lives(self.images["player_life"], self.mPlayer.lives)
 
