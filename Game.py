@@ -125,7 +125,7 @@ class Game:
                                     TypeEnum.PLAYER)
 
             if EVENT.type == KEYDOWN and EVENT.key == K_ESCAPE:
-                self.show_beak_screen()
+                self.show_break_screen()
             if EVENT.type == self.enemy_shoot_event:
                 if not self.enemies_moving:
                     random_enemy = random.choice(self.mEnemiesSpriteGroup.sprites())
@@ -195,7 +195,7 @@ class Game:
                     if time.get_ticks() - current_time > timer:
                         waiting = False
 
-    def show_beak_screen(self):
+    def show_break_screen(self):
         self.screen.blit(self.background_img, (0, 0))
         rect = Rect(400, 200, 100, 50)
         rect2 = Rect(400, 600, 100, 50)
@@ -218,6 +218,9 @@ class Game:
                         waiting = False
                 if EVENT.type == KEYDOWN and EVENT.key == K_ESCAPE:
                     waiting = False
+
+                if EVENT.type == QUIT:
+                    sys.exit()
 
         display.flip()
 
