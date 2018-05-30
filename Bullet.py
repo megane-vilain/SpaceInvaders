@@ -6,12 +6,9 @@ from ObjectBoard import *
 class Bullet(ObjectBoard):
 
     def __init__(self, row, column, image, direction):
-        self.row = row
-        self.column = column
-        self.image = image
-        super().__init__(image, self.row, self.column)
-        self.rect.centerx = (self.TileWidth * column ) + (self.TileWidth + self.TileMargin) / 2
-        self.rect.top = (self.TileHeight * row) + self.TileHeight / 2
+        super().__init__(image, row, column)
+        self.rect.centerx = (self.tile_width * column) + (self.tile_width + self.tile_margin) / 2
+        self.rect.top = (self.tile_height * row) + self.tile_height / 2
         self.timer = time.get_ticks()
         self.move_delay = 100
         self.direction = direction
@@ -22,7 +19,7 @@ class Bullet(ObjectBoard):
 
         if current_time - self.timer > self.move_delay:
             self.row += self.direction
-            while self.rect.top != (self.TileHeight * row) + self.TileHeight / 2:
+            while self.rect.top != (self.tile_height * row) + self.tile_height / 2:
                 self.rect.top += 4 * self.direction
             self.timer += self.move_delay
 
