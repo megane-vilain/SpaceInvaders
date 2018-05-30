@@ -15,12 +15,12 @@ class ObjectBoard(sprite.Sprite):
         self.direction = 1
         self.rect.left = (self.tile_width * column + self.tile_margin)
         self.rect.top = (self.tile_height * row + self.tile_margin)
-        self.shoot_delay = 700
+        self.shoot_delay = 400
         self.last_shot = time.get_ticks()
 
     def shoot(self, current_time):
         if current_time - self.last_shot > self.shoot_delay:
-            self.last_shot += self.shoot_delay
+            self.last_shot = time.get_ticks()
             return True
 
         else:

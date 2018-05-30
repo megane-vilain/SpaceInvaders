@@ -1,4 +1,5 @@
 from os import path
+import sys
 from Enemy import *
 from Player import *
 from Bullet import *
@@ -32,6 +33,7 @@ class Game:
         self.load_screen = True
         self.game_over = False
         self.high_score = 0
+        self.enemies_moving = False
 
         # Custom Pygame events
         self.enemy_shoot_event = USEREVENT + 1
@@ -99,11 +101,12 @@ class Game:
     def add_bullet(self, bullet_img, row, column, direction, object_type):
         self.mBullet = Bullet(row, column, bullet_img, direction)
         self.mAllSpritesGroup.add(self.mBullet)
-        self.mMap.grid[row][column] = TypeEnum.BULLET
-        if object_type == TypeEnum.PLAYER:
-            self.mPlayerBulletsSpriteGroup.add(self.mBullet)
-        else:
-            self.mEnemiesBulletsSpriteGroup.add(self.mBullet)
+        if row != -1 and row != 10:
+            self.mMap.grid[row][column] = TypeEnum.BULLET
+            if object_type == TypeEnum.PLAYER:
+                self.mPlayerBulletsSpriteGroup.add(self.mBullet)
+            else:
+                self.mEnemiesBulletsSpriteGroup.add(self.mBullet)
 
         self.sounds["shoot"].play()
 
@@ -118,13 +121,15 @@ class Game:
                                     TypeEnum.PLAYER)
 
             if EVENT.type == self.enemy_shoot_event:
-                random_enemy = random.choice(self.mEnemiesSpriteGroup.sprites())
-                self.add_bullet(self.images["enemy_laser"], random_enemy.row + 1, random_enemy.column, 1,
-                                TypeEnum.ENEMY)
-                time.set_timer(self.enemy_shoot_event, self.shoot_time)
+                if not self.enemies_moving:
+                    random_enemy = random.choice(self.mEnemiesSpriteGroup.sprites())
+                    self.add_bullet(self.images["enemy_laser"], random_enemy.row + 1, random_enemy.column, 1,
+                                    TypeEnum.ENEMY)
+                    time.set_timer(self.enemy_shoot_event, self.shoot_time)
 
             if EVENT.type == self.enemy_move_event:
-                if self.mMap.grid[self.row][14] == TypeEnum.ENEMY or self.mMap.grid[self.row][-1] == TypeEnum.ENEMY:
+                self.enemies_moving = True
+                if self.mMap.grid[self.row][13] == TypeEnum.ENEMY or self.mMap.grid[self.row][1] == TypeEnum.ENEMY:
                     move_down = True
                     self.row += 1
                 else:
@@ -134,14 +139,21 @@ class Game:
                     coord_enemies = enemy.update(time.get_ticks(), move_down)
                     self.screen.blit(enemy.image, enemy.rect)
                     self.mMap.update_map(coord_enemies, TypeEnum.ENEMY)
+                    print("row : " + str(coord_enemies.row) + " column : " + str(coord_enemies.column))
+                    if coord_enemies.column == 4:
+                        print("Test")
+                    if coord_enemies.column == 14:
+                        print("Test")
                 time.set_timer(self.enemy_move_event, ENEMY_MOVE_TIME)
+                self.enemies_moving = False
 
     def show_game_over_screen(self, title, current_time, timer):
         self.screen.blit(self.background_img, (0, 0))
         self.draw_text(title, 64, self.mMap.tile_width * 7, self.mMap.tile_height * 2, WHITE)
 
         if self.score > self.high_score:
-            self.draw_text(("NEW HIGH SCORE " + str(self.score)), 25, self.mMap.tile_width * 7, self.mMap.tile_height * 4,
+            self.draw_text(("NEW HIGH SCORE " + str(self.score)), 25, self.mMap.tile_width * 7,
+                           self.mMap.tile_height * 4,
                            WHITE)
         else:
             self.draw_text(("SCORE " + str(self.score)), 25, self.mMap.tile_width * 7,
@@ -163,7 +175,8 @@ class Game:
     def show_load_screen(self, current_time, timer):
         self.screen.blit(self.background_img, (0, 0))
         self.draw_text(" SPACE INVADERS", 64, self.mMap.tile_width * 7, self.mMap.tile_height * 2, WHITE)
-        self.draw_text("HIGH SCORE " + str(self.high_score), 35, self.mMap.tile_width * 7, self.mMap.tile_width * 4, WHITE )
+        self.draw_text("HIGH SCORE " + str(self.high_score), 35, self.mMap.tile_width * 7, self.mMap.tile_width * 4,
+                       WHITE)
         self.screen.blit(self.images["space_invaders_main"], (self.mMap.tile_width * 6, self.mMap.tile_height * 5))
         self.draw_text("Press a key to start", 25, self.mMap.tile_width * 7, self.mMap.tile_height * 7,
                        WHITE)
@@ -257,12 +270,16 @@ class Game:
                 self.sounds["expl3"].play()
                 self.score += enemy.value
 
+            for bullet in sprite.groupcollide(self.mPlayerBulletsSpriteGroup, self.mEnemiesBulletsSpriteGroup, True,
+                                              True):
+                self.mMap.grid[bullet.row][bullet.row] = TypeEnum.EMPTY
+
             if sprite.spritecollide(self.mPlayer, self.mEnemiesSpriteGroup, False):
                 self.end_game = True
 
             if sprite.spritecollide(self.mPlayer, self.mEnemiesBulletsSpriteGroup, False):
                 if self.mPlayer.lives >= 0 >= self.mPlayer.invulnerability_frame:
-                    self.mPlayer.invulnerability_frame = 120
+                    self.mPlayer.invulnerability_frame = 240
                     self.sounds["shipexplosion"].play()
                     self.mPlayer.lives -= 1
 
@@ -284,6 +301,11 @@ class Game:
             self.draw_text(str(self.score), 25, self.mMap.tile_width * 2, 10, BLUE)
 
             self.draw_lives(self.images["player_life"], self.mPlayer.lives)
+
+            for Row in range(11):
+                draw.line(self.screen, (255, 255, 255), (0, Row * 64), (900, 64 * Row), 4)
+                for Column in range(14):
+                    draw.line(self.screen, (255, 255, 255), (Column * 64, 0), (Column * 64, 700), 4)
 
             display.update()
             display.flip()
