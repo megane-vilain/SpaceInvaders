@@ -35,6 +35,8 @@ class Game:
         self.game_over = False
         self.high_score = 0
         self.enemies_moving = False
+        self.direction = 1
+        self.row_test = 1
 
         # Custom Pygame events
         self.enemy_shoot_event = USEREVENT + 1
@@ -74,7 +76,7 @@ class Game:
         self.add_enemies(8, 1, self.images["enemy1"])
         self.add_enemies(8, 2, self.images["enemy2"])
         self.add_enemies(8, 3, self.images["enemy3"])
-        self.add_player(9,6,self.images["player_ship"])
+        self.add_player(9, 6, self.images["player_ship"])
 
     def draw_lives(self, img, lives):
         for i in range(lives):
@@ -97,7 +99,7 @@ class Game:
             self.mEnemiesSpriteGroup.add(self.mEnemy)
             self.mMap.grid[row][3 + i] = TypeEnum.ENEMY
 
-    def add_player(self,row, column,  player_img):
+    def add_player(self, row, column, player_img):
         self.mPlayer = Player(row, column, player_img)
         self.mAllSpritesGroup.add(self.mPlayer)
         self.mMap.grid[self.mPlayer.row][self.mPlayer.column] = TypeEnum.PLAYER
@@ -105,8 +107,8 @@ class Game:
     def add_bullet(self, bullet_img, row, column, direction, object_type):
         self.mBullet = Bullet(row, column, bullet_img, direction)
         self.mAllSpritesGroup.add(self.mBullet)
-        if row != -1 and row != 10:
-            self.mMap.grid[row][column] = TypeEnum.BULLET
+        if row >= -1 and not row >= 10:
+            #self.mMap.grid[row][column] = TypeEnum.BULLET
             if object_type == TypeEnum.PLAYER:
                 self.mPlayerBulletsSpriteGroup.add(self.mBullet)
             else:
@@ -127,24 +129,64 @@ class Game:
             if EVENT.type == KEYDOWN and EVENT.key == K_ESCAPE:
                 self.show_break_screen()
             if EVENT.type == self.enemy_shoot_event:
-                if not self.enemies_moving:
-                    random_enemy = random.choice(self.mEnemiesSpriteGroup.sprites())
-                    self.add_bullet(self.images["enemy_laser"], random_enemy.row + 1, random_enemy.column, 1,
-                                    TypeEnum.ENEMY)
-                    time.set_timer(self.enemy_shoot_event, self.shoot_time)
+                bool = True
+                while bool:
+
+                    if not self.enemies_moving:
+
+                        random_enemy = random.choice(self.mEnemiesSpriteGroup.sprites())
+                        if self.mMap.is_enemy_first(random_enemy.row,random_enemy.column):
+                            self.add_bullet(self.images["enemy_laser"], random_enemy.row + 1, random_enemy.column, 1,
+                                            TypeEnum.ENEMY)
+                            time.set_timer(self.enemy_shoot_event, self.shoot_time)
+                            bool = False
+
 
             if EVENT.type == self.enemy_move_event:
                 self.enemies_moving = True
                 if self.mMap.grid[self.row][13] == TypeEnum.ENEMY or self.mMap.grid[self.row][1] == TypeEnum.ENEMY:
                     move_down = True
                     self.row += 1
+                    self.direction *= -1
                 else:
                     move_down = False
 
                 for enemy in self.mEnemiesSpriteGroup:
                     coord_enemies = enemy.update(time.get_ticks(), move_down)
                     self.screen.blit(enemy.image, enemy.rect)
-                    self.mMap.update_map(coord_enemies, TypeEnum.ENEMY)
+                if move_down:
+                    self.column = 0
+                    while self.column <= 13 :
+
+                        for i in range(7,0,-1):
+                            if self.mMap.grid[i+1][self.column] != TypeEnum.BULLET and self.mMap.grid[i][self.column] != TypeEnum.BULLET:
+                                self.mMap.grid[i+1][self.column] = self.mMap.grid[i][self.column]
+                                self.mMap.grid[i][self.column] = TypeEnum.EMPTY
+
+                        self.column += 1
+                    move_down = False
+                if not move_down:
+                    if self.direction == 1:
+                        self.row_test = 1
+                        while self.row_test <= self.mMap.map_row - 2:
+                            for i in range(13, 0, -1):
+                                if i == 0:
+                                    self.mMap.grid[self.row_test][i] = TypeEnum.EMPTY
+                                else:
+                                    self.mMap.grid[self.row_test][i + 1] = self.mMap.grid[self.row_test][i]
+                                    self.mMap.grid[self.row_test][i] = TypeEnum.EMPTY
+
+                            self.row_test += 1
+                    else:
+                        self.row_test = self.row
+                        while self.row_test <= self.mMap.map_row -2:
+                            for i in range(0, 14, 1):
+                                if i == 14:
+                                    self.mMap.grid[self.row_test][i] = TypeEnum.EMPTY
+                                else:
+                                    self.mMap.grid[self.row_test][i] = self.mMap.grid[self.row_test][i+1]
+                                    self.mMap.grid[self.row_test][i+1] = TypeEnum.EMPTY
+                            self.row_test += 1
 
                 time.set_timer(self.enemy_move_event, ENEMY_MOVE_TIME)
                 self.enemies_moving = False
@@ -154,16 +196,11 @@ class Game:
         self.draw_text(self.screen, title, 64, self.mMap.tile_width * 7, self.mMap.tile_height * 2, WHITE)
 
         if self.score > self.high_score:
-            self.draw_text(("NEW HIGH SCORE " + str(self.score)), 25, self.mMap.tile_width * 7,
-                           self.mMap.tile_height * 4,
-                           WHITE)
+            self.draw_text(self.screen,("NEW HIGH SCORE " + str(self.score)), 25, self.mMap.tile_width * 7,self.mMap.tile_height * 4, WHITE)
         else:
-            self.draw_text(("SCORE " + str(self.score)), 25, self.mMap.tile_width * 7,
-                           self.mMap.tile_height * 4,
-                           WHITE)
+            self.draw_text(self.screen,("SCORE " + str(self.score)), 25, self.mMap.tile_width * 7,self.mMap.tile_height * 4, WHITE)
         self.draw_text(self.screen, "Press a key to start again", 25, self.mMap.tile_width * 7,
-                       self.mMap.tile_height * 6,
-                       WHITE)
+                       self.mMap.tile_height * 6,WHITE)
         display.flip()
         waiting = True
         while waiting:
@@ -178,12 +215,9 @@ class Game:
     def show_load_screen(self, current_time, timer):
         self.screen.blit(self.background_img, (0, 0))
         self.draw_text(self.screen, " SPACE INVADERS", 64, self.mMap.tile_width * 7, self.mMap.tile_height * 2, WHITE)
-        self.draw_text(self.screen, "HIGH SCORE " + str(self.high_score), 35, self.mMap.tile_width * 7,
-                       self.mMap.tile_width * 4,
-                       WHITE)
+        self.draw_text(self.screen, "HIGH SCORE " + str(self.high_score), 35, self.mMap.tile_width * 7, self.mMap.tile_width * 4, WHITE)
         self.screen.blit(self.images["space_invaders_main"], (self.mMap.tile_width * 6, self.mMap.tile_height * 5))
-        self.draw_text(self.screen, "Press a key to start", 25, self.mMap.tile_width * 7, self.mMap.tile_height * 7,
-                       WHITE)
+        self.draw_text(self.screen, "Press a key to start", 25, self.mMap.tile_width * 7, self.mMap.tile_height * 7, WHITE)
         display.flip()
         waiting = True
         while waiting:
@@ -242,7 +276,7 @@ class Game:
                 writer.writerow(self.mMap.get_row_string(row))
 
         with open(path.join(path.dirname(__file__), SAVE_FILE), 'w+') as f:
-            f.write(str(self.score) + "-" + str(self.mPlayer.lives) )
+            f.write(str(self.score) + "-" + str(self.mPlayer.lives))
 
     def load_map(self):
         self.reset()
@@ -253,29 +287,29 @@ class Game:
             for reader_row in reader:
                 i = len(reader_row)
                 column = 0
-                for element in reader_row :
+                for element in reader_row:
                     if element != "2":
                         if element == "3":
                             enemy = Enemy(row, column, self.images["enemy1"])
+                            self.row = row
                             self.mEnemiesSpriteGroup.add(enemy)
                             self.mAllSpritesGroup.add(enemy)
                         if element == "1":
                             player = Player(row, column, self.images["player_ship"])
-                            self.mPlayer  = player
+                            self.mPlayer = player
                             self.mAllSpritesGroup.add(player)
                         self.mMap.grid[row][column] = TypeEnum(int(element))
 
                     column += 1
-                row +=1
+                row += 1
         with open(path.join(path.dirname(__file__), SAVE_FILE), 'r') as f:
             try:
 
-                   s = f.read()
-                   self.score = int(s.split("-")[0])
-                   self.mPlayer.lives = int(s.split("-")[1])
+                s = f.read()
+                self.score = int(s.split("-")[0])
+                self.mPlayer.lives = int(s.split("-")[1])
             except:
                 self.score = 0
-
 
     def reset(self):
         self.mPlayer.lives = 3
@@ -319,20 +353,20 @@ class Game:
             for bullet in self.mEnemiesBulletsSpriteGroup:
                 coord_bullets = bullet.update(time.get_ticks())
                 self.screen.blit(self.images["enemy_laser"], bullet.rect)
-                if coord_bullets.row != coord_bullets.old_row:
-                    if coord_bullets.row == -1 or 0 < coord_bullets.row < 10:
-                        self.mMap.update_map(coord_bullets, TypeEnum.BULLET)
-                    if coord_bullets.row < -1 or coord_bullets.row > 10:
-                        bullet.kill()
+                # if coord_bullets. row != coord_bullets.old_row:
+                #     if coord_bullets.row == -1 or 0 < coord_bullets.row < 10:
+                #         self.mMap.update_map(coord_bullets, TypeEnum.BULLET)
+                #     if coord_bullets.row < -1 or coord_bullets.row > 10:
+                #         bullet.kill()
 
             for bullet in self.mPlayerBulletsSpriteGroup:
                 coord_bullets = bullet.update(time.get_ticks())
                 self.screen.blit(self.images["player_laser"], bullet.rect)
-                if coord_bullets.row != coord_bullets.old_row:
-                    if coord_bullets.row == 0 < coord_bullets.row < 10:
-                        self.mMap.update_map(coord_bullets, TypeEnum.BULLET)
-                    if coord_bullets.row < -1 or coord_bullets.row > 10:
-                        bullet.kill()
+                # if coord_bullets.row != coord_bullets.old_row:
+                #     if coord_bullets.row == 0 < coord_bullets.row < 10:
+                #         self.mMap.update_map(coord_bullets, TypeEnum.BULLET)
+                #     if coord_bullets.row < -1 or coord_bullets.row > 10:
+                #       bullet.kill()
 
             for enemy in sprite.groupcollide(self.mEnemiesSpriteGroup, self.mPlayerBulletsSpriteGroup, True, True):
                 self.mMap.grid[enemy.row][enemy.column] = TypeEnum.EMPTY
@@ -370,7 +404,6 @@ class Game:
             self.draw_text(self.screen, str(self.score), 25, self.mMap.tile_width * 2, 10, BLUE)
 
             self.draw_lives(self.images["player_life"], self.mPlayer.lives)
-
 
             display.update()
             display.flip()
