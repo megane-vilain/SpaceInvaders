@@ -6,10 +6,9 @@ class Map(object):
 
     def __init__(self, row, column):
 
-        self.map_row = row
-        self.map_column = column
+        self.row_number = row
+        self.column_number = column
         self.grid = []
-        self.size = width, height = 900, 700
         self.tile_width = 64
         self.tile_height = 64
         self.tile_margin = 4
@@ -17,9 +16,9 @@ class Map(object):
         self.init_map()
 
     def init_map(self):
-        for row in range(self.map_row):
+        for row in range(self.row_number):
             self.grid.append([])
-            for column in range(self.map_column):
+            for column in range(self.column_number):
                 self.grid[row].append([])
                 self.grid[row][column] = TypeEnum.EMPTY
 
@@ -34,14 +33,21 @@ class Map(object):
 
     def get_row_string(self, row):
         line = ""
-        for column in range(self.map_column):
+        for column in range(self.column_number):
             line += str(self.grid[row][column].value)
         return line
 
     def is_enemy_first(self, row, column):
-        for row in range(row+1, self.map_row ):
+        for row in range(row + 1, self.row_number):
 
             if self.grid[row][column] == TypeEnum.ENEMY:
                 return False
 
         return True
+
+    def check_boundaries(self):
+        for row in range(0, self.row_number):
+            if self.grid[row][0] == TypeEnum.ENEMY or self.grid[row][13] == TypeEnum.ENEMY:
+                return True
+
+        return False
